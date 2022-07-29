@@ -1,0 +1,9 @@
+@font-face {
+    font-family: 'Alliance-Regular';
+    src: local('Alliance No 1 Regular'), local('Alliance-No-1-Regular'),
+        url('AllianceNo1-Regular.woff2') format('woff2'),
+        url('AllianceNo1-Regular.woff') format('woff'),
+        url('AllianceNo1-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+  }
