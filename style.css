@@ -43,8 +43,8 @@ body {
 
 header {
     background-color: rgba(255, 255, 255, 0);
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
     width: 100vw;
     height: 100px;
     position: absolute;
@@ -53,13 +53,57 @@ header {
     z-index: 6;
 }
 
+#header-wrapper {
+    width: 100vw;
+    max-width: 1600px;
+    margin: 0 auto;
+    height: 100px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+#header-links {
+    display: flex;
+    flex-direction: row;
+    margin-right: 105px;
+}
+
+.header-link {
+    display: flex;
+    flex-direction: row;
+    margin-right: 15px;
+}
+
+.link-txt {
+    color: white;
+}
+
+.link-num {
+    font-feature-settings: "ss02" off,"ss01" off;
+    background: linear-gradient(to bottom right, var(--light-blue), var(--purple));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+
 
 main {
     width: 100vw;
     max-width: 1600px;
-    min-height: 100vh; /*leva*/
     margin: 0 auto;
     z-index: 1;
+}
+
+#main-bg {
+    z-index: 4;
+    position: absolute;
+    top: 100vh;
+    left: 0;
+    height: 10000px;
+    width: 100vw;
+    background-color: rgb(255, 255, 255);
 }
 
 #landing {
@@ -81,12 +125,11 @@ main {
 
 
 
-
 /* landing-text */
 
 #landing-text {
     margin-left: 200px;
-    height: 100vh;
+    height: 90vh;
     min-height: calc(480px + 1vw);
     
     display: flex;
@@ -252,7 +295,7 @@ main {
 
 #atmosphere-container {
     width: 100vw;
-    height: 100vh;
+    height: 105vh;
     min-height: calc(480px + 1vw);
     display: flex;
     align-items: flex-end;

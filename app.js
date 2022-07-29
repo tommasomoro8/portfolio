@@ -103,10 +103,23 @@ function starShine() {
 } setInterval(starShine, 15);
 
 
-//                       /\
-//                       ||
-//                       ||
-//                       ||
-//                       ||
+// //                       /\
+// //                       ||
+// //                       ||
+// //                       ||
+// //                       ||
 
-//  responsive in base a quante stelle ci sono
+// //  responsive in base a quante stelle ci sono
+
+
+function getScrollPercent() {
+    let h = document.documentElement, 
+        b = document.body,
+        st = 'scrollTop',
+        sh = 'scrollHeight';
+    return (h[st]||b[st]) / ((h[sh]||b[sh]) - h.clientHeight) * 100;
+}
+
+// addEventListener('scroll', () => {
+
+// })
