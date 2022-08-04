@@ -504,6 +504,7 @@ main {
     text-align: justify;
     text-justify: inter-word;
     font-family: "Alliance-Regular",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif;
+    font-size: 22px;
 }
 
 #projects-content-container {
