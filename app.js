@@ -82,6 +82,8 @@ function removeStarsW(fromW) {
 let oldScreenSize = {w: window.innerWidth, h: window.innerHeight}
 
 addEventListener('resize', () => {
+
+    return
     if (Math.ceil(oldScreenSize.h/starsGroupSize) < Math.ceil(window.innerHeight/starsGroupSize))
         createStars(Math.ceil(oldScreenSize.h/starsGroupSize), 0)
     if (Math.ceil(oldScreenSize.w/starsGroupSize) < Math.ceil(window.innerWidth/starsGroupSize))
@@ -100,7 +102,9 @@ function starShine() {
     let starShining = stars[Math.floor(getRand(0, stars.length))][Math.floor(getRand(0, stars[0].length))].childNodes[Math.floor(getRand(0, 4))]
     starShining.classList.add("shine")
     setTimeout(() => starShining.classList.remove("shine"), 1000);
-} setInterval(starShine, 15);
+}
+
+let starShineInterval = setInterval(starShine, 15);
 
 
 // //                       /\
@@ -111,15 +115,70 @@ function starShine() {
 
 // //  responsive in base a quante stelle ci sono
 
+let h = document.documentElement, 
+    b = document.body,
+    st = 'scrollTop',
+    sh = 'scrollHeight';
 
-function getScrollPercent() {
-    let h = document.documentElement, 
-        b = document.body,
-        st = 'scrollTop',
-        sh = 'scrollHeight';
-    return (h[st]||b[st]) / ((h[sh]||b[sh]) - h.clientHeight) * 100;
-}
 
-// addEventListener('scroll', () => {
+let getScrollPercent = () => { return (h[st]||b[st]) / ((h[sh]||b[sh]) - h.clientHeight) * 100 }
 
-// })
+let getScrollFirstPagePercent = () => { return (h[st]||b[st])/h.clientHeight * 100 }
+
+
+let starOnScreen = true
+
+addEventListener('scroll', () => {
+    if (getScrollFirstPagePercent() > 100) {
+        if (starOnScreen) clearInterval(starShineInterval)
+        if (starOnScreen) console.log("stop star shine")
+        starOnScreen = false
+    }
+    else {
+        if (!starOnScreen) starShineInterval = setInterval(starShine, 15)
+        if (!starOnScreen) console.log("start star shine")
+        starOnScreen = true
+    }
+
+    if (starOnScreen) {
+        document.getElementById("stars-container").style.top = `-${(h[st]||b[st])/h.clientHeight * 30}vh`
+    }
+})
+
+document.getElementById("about-img-bg").addEventListener('mouseover', () => {
+    document.getElementById("about-img").classList.add("hover")
+    document.getElementById("about-img-bg").classList.add("hover")
+});
+
+document.getElementById("about-img-bg").addEventListener('mouseout', () => {
+    document.getElementById("about-img").classList.remove("hover")
+    document.getElementById("about-img-bg").classList.remove("hover")
+});
+
+addEventListener('scroll', () => {
+    let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    //console.log(scrollTop - window.innerHeight)
+
+    let divScroll = scrollTop - (414 + window.innerHeight)
+    if (divScroll < 221) {
+        document.getElementById("projects-status").style.backgroundImage = "url('svg/0.svg')";
+    } else if (divScroll < 503) {
+        document.getElementById("projects-status").style.backgroundImage = "url('svg/1.svg')";
+    } else if (divScroll < 806) {
+        document.getElementById("projects-status").style.backgroundImage = "url('svg/2.svg')";
+    } else if (divScroll < 1086.5) {
+        document.getElementById("projects-status").style.backgroundImage = "url('svg/3.svg')";
+    } else {
+        document.getElementById("projects-status").style.backgroundImage = "url('svg/4.svg')";
+    }
+
+    document.getElementById("projects-content-container").scrollTo(0, scrollTop - (414 + window.innerHeight));
+    
+
+
+    // document.body.style.backgroundImage = "url('img_tree.png')";
+})
+
+//414 + window.innerHeight = 0
+
+

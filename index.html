@@ -16,22 +16,22 @@
     <header>
         <div id="header-wrapper">
             <div id="header-links">
-                <div class="header-link">
+                <a href="#about" class="header-link">
                     <div class="link-num">01.</div>
                     <div class="link-txt">&nbsp;About</div>
-                </div>
-                <div class="header-link">
+                </a>
+                <a href="#projects" class="header-link">
                     <div class="link-num">02.</div>
                     <div class="link-txt">&nbsp;Projects</div>
-                </div>
-                <div class="header-link">
+                </a>
+                <a href="#knowledge" class="header-link">
                     <div class="link-num">03.</div>
                     <div class="link-txt">&nbsp;Knowledge</div>
-                </div>
-                <div class="header-link">
+                </a>
+                <a href="#contacts" class="header-link">
                     <div class="link-num">04.</div>
                     <div class="link-txt">&nbsp;Contacts</div>
-                </div>
+                </a>
             </div>
         </div>
 
@@ -64,17 +64,130 @@
             <div id="landing-text">
                 <h3>Hi there!&nbsp;<img id="hi-img" src="img/hi.png"/>&nbsp;I'm</h3>
                 <h1>Tommaso Moro</h1>
-                <h2>And I’m a full stack developer&nbsp;<img id="pc-img" src="img/pc.png"/></h2>
+                <h2>And I’m a software engineer&nbsp;<img id="pc-img" src="img/pc.png"/></h2>
             </div>
 
             
         </section>
 
-        <section id="about" style="height: 4000px;">
-            <div>ciao</div>
+        <section id="about">
+            <div class="section-wrapper">
+                <div class="section-title">
+                    <h1><span>01.</span>&nbsp;About</h1>
+                    <div class="section-title-divider left"></div>
+                </div>
+                <div id="about-content">
+                    <div id="about-txt">
+                        I am a seventeen year old boy born in Treviso, near Venice, in Italy.
+                        I currently live and study in Vancouver.
+                        From an early age I liked to use the computer and in elementary school I learned to use Scratch.
+                        I started programming in high school by creating simple websites, and over the years I improved my knowledge by learning new programming languages and techniques.
+                    </div>
+                    <div id="about-img-container">
+                        <div id="about-img">
+                            <div id="about-img-bg"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </section>
-        
-        
+
+        <section id="projects">
+            <div id="projects-section-wrapper" class="section-wrapper">
+                <div id="sticky">
+                <div id="section-title-projects" class="section-title">
+                    <div class="section-title-divider right"></div>
+                    <h1><span>02.</span>&nbsp;Projects</h1>
+                </div>
+                <div id="projects-content-status-container">
+                    <div id="projects-content">
+                        <div id="projects-content-container">
+                            <div id="projects-content-container-height">
+                                <div id="chess" class="project">
+                                    <div class="project-title">
+                                        <h1>Chess</h1>
+                                        <a onclick="window.open(`https://morotommaso.altervista.org/chess/`);" class="link-projects">
+                                            <img src="svg/link-projects.svg" alt="link"/>
+                                        </a>
+                                    </div>
+                                    <div class="project-content">
+                                        I study at the Liceo Duca Degli Abruzzi at Treviso and have been programming for almost two years. I started by programming a simple website as a school project and immediately became interested in the subject. As time went on I ranged over different languages and projects that helped me keep this passion active.
+                                    </div>
+                                    <div class="project-lang">HTML + CSS + JS</div>
+                                </div>
+
+                                <div id="facefinder" class="project">
+                                    <div class="project-title">
+                                        <h1>FaceFinder</h1>
+                                    </div>
+                                    <div class="project-content">
+                                        I study at the Liceo Duca Degli Abruzzi at Treviso and have been programming for almost two years. I started by programming a simple website as a school project and immediately became interested in the subject. As time went on I ranged over different languages and projects that helped me keep this passion active.
+                                    </div>
+                                    <div class="project-lang">SWIFT + AWS + FIREBASE</div>
+                                </div>
+
+                                <div id="scrovegnichapel" class="project">
+                                    <div class="project-title">
+                                        <h1>Scrovegni Chapel</h1>
+                                        <a onclick="window.open(`https://github.com/tommasomoro8/cappella-degli-scrovegni`);" class="git-projects">
+                                            <img src="svg/git-projects.svg" alt="git"/>
+                                        </a>
+                                        <a onclick="window.open(`https://morotommaso.altervista.org/cappelladegliscrovegni/`);" class="link-projects">
+                                            <img src="svg/link-projects.svg" alt="link"/>
+                                        </a>
+                                    </div>
+                                    <div class="project-content">
+                                        I study at the Liceo Duca Degli Abruzzi at Treviso and have been programming for almost two years. I started by programming a simple website as a school project and immediately became interested in the subject. As time went on I ranged over different languages and projects that helped me keep this passion active.
+                                    </div>
+                                    <div class="project-lang">HTML + CSS + JS + NODE.JS + THREE.JS + FIREBASE</div>
+                                </div>
+
+                                <div id="trevisocathedral" class="project">
+                                    <div class="project-title">
+                                        <h1>Treviso Cathedral</h1>
+                                        <a onclick="window.open(`https://duomotreviso.netlify.app/app.html`);" class="link-projects">
+                                            <img src="svg/link-projects.svg" alt="link"/>
+                                        </a>
+                                    </div>
+                                    <div class="project-content">
+                                        I study at the Liceo Duca Degli Abruzzi at Treviso and have been programming for almost two years. I started by programming a simple website as a school project and immediately became interested in the subject. As time went on I ranged over different languages and projects that helped me keep this passion active.
+                                    </div>
+                                    <div class="project-lang">UNITY + C# + UNITY VR</div>
+                                </div>
+
+                                <div id="battleship" class="project">
+                                    <div class="project-title">
+                                        <h1>Battleship</h1>
+                                        <a onclick="window.open(`https://github.com/tommasomoro8/battleship`);" class="git-projects">
+                                            <img src="svg/git-projects.svg" alt="git"/>
+                                        </a>
+                                        <a onclick="window.open(`https://battaglianavale.herokuapp.com/`);" class="link-projects">
+                                            <img src="svg/link-projects.svg" alt="link"/>
+                                        </a>
+                                    </div>
+                                    <div class="project-content">
+                                        I study at the Liceo Duca Degli Abruzzi at Treviso and have been programming for almost two years. I started by programming a simple website as a school project and immediately became interested in the subject. As time went on I ranged over different languages and projects that helped me keep this passion active.
+                                    </div>
+                                    <div class="project-lang">HTML + CSS + JS + NODE.JS + SOCKET.IO</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="projects-status"></div>
+                </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="knowledge">
+
+        </section>
+
+        <section id="contacts">
+
+        </section>
+
     </main>
 
     <footer>
