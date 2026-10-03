@@ -1,15 +1,17 @@
 import { CORE_SCHEMA, load } from 'js-yaml';
-import { isExternalUrl, isHttpUrl, resolveRepoPath } from './repo-path.mjs';
+import { isHttpUrl, resolveRepoPath } from './repo-path.mjs';
 
 export const CATEGORIES = ['university', 'school', 'personal', 'client'];
 export const STATUSES = ['completed', 'in progress', 'archived'];
 export const PRESS_KINDS = ['article', 'competition', 'event', 'award'];
 
+const CATEGORY_ALIASES = { uni: 'university', pers: 'personal', comm: 'client' };
 const PROJECT_FIELDS = [
   'title', 'slug', 'category', 'year', 'period', 'status', 'role',
-  'course', 'cover', 'demo', 'code_public', 'note', 'press',
+  'course', 'cover', 'demo', 'code_public', 'note', 'screenshots', 'press',
 ];
 const PRESS_FIELDS = ['title', 'source', 'kind', 'date', 'url', 'lang'];
+const SCREENSHOT_FIELDS = ['src', 'alt'];
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -20,6 +22,7 @@ const TODO = /\bTODO\b/;
  * Parse and validate the text of a project's `portfolio.yml`.
  * `source` names the project in messages (e.g. `owner/repo` or `local:slug`).
  * Returns `{ data, errors, warnings }`; `data` is `null` when there are errors.
+ * In `data`, `cover` and screenshot `src` are normalized repo-relative paths.
  */
 export function parsePortfolioYml(text, { source }) {
   if (!text.replace(/^\s*#.*$/gm, '').trim()) {
@@ -56,33 +59,50 @@ export function validatePortfolio(raw, { source }) {
   const data = {
     title: field.string('title', { required: true }),
     slug: field.string('slug', { required: true }),
-    category: field.oneOf('category', CATEGORIES),
+    category: field.oneOf('category', CATEGORIES, CATEGORY_ALIASES),
     year: field.year('year'),
     period: field.string('period', { required: true }),
     status: field.oneOf('status', STATUSES),
     role: field.string('role', { required: true }),
     course: field.string('course'),
-    cover: field.string('cover', { required: true }),
+    cover: field.repoPath('cover', { required: true }),
     demo: field.string('demo'),
-    code_public: field.boolean('code_public'),
+    code_public: field.boolean('code_public', { fallback: true }),
     note: field.string('note'),
-    press: readPress(raw.press, fail, warn),
+    screenshots: readList(raw, 'screenshots', SCREENSHOT_FIELDS, fail, warn, (item) => ({
+      src: item.repoPath('src', { required: true }),
+      alt: item.string('alt', { required: true }),
+    })),
+    press: readList(raw, 'press', PRESS_FIELDS, fail, warn, (item, path) => {
+      const entry = {
+        title: item.string('title', { required: true }),
+        source: item.string('source', { required: true }),
+        kind: item.oneOf('kind', PRESS_KINDS),
+        date: item.string('date'),
+        url: item.string('url', { required: true }),
+        lang: item.string('lang'),
+      };
+      if (entry.date && !isCalendarDate(entry.date)) {
+        fail(`${path}.date`, `must be a date in YYYY-MM-DD format, or empty if unknown (got ${describe(entry.date)})`);
+      }
+      if (entry.url && !isHttpUrl(entry.url)) {
+        fail(`${path}.url`, `must be an http(s) URL (got ${describe(entry.url)})`);
+      }
+      if (entry.lang && !LANG.test(entry.lang)) {
+        fail(`${path}.lang`, `must be a two-letter lowercase language code such as "it", or empty for English (got ${describe(entry.lang)})`);
+      }
+      return entry;
+    }),
   };
 
   if (data.slug && !SLUG.test(data.slug)) {
     fail('slug', `must be lowercase letters and digits separated by single dashes (got ${describe(data.slug)})`);
   }
-  if (data.cover) {
-    const inRepo = !isExternalUrl(data.cover) && resolveRepoPath(data.cover);
-    if (!inRepo && !isHttpUrl(data.cover)) {
-      fail('cover', `must be a path inside the repository or an http(s) URL (got ${describe(data.cover)})`);
-    }
-  }
   if (data.demo && !isHttpUrl(data.demo)) {
     fail('demo', `must be an http(s) URL or empty (got ${describe(data.demo)})`);
   }
 
-  for (const [name, value] of todoFields(data)) warn(`"${name}" still contains TODO`);
+  for (const name of todoFields(data)) warn(`"${name}" still contains TODO`);
 
   return { data: errors.length ? null : data, errors, warnings };
 }
@@ -105,46 +125,29 @@ export function findDuplicateSlugs(projects) {
   return errors;
 }
 
-function readPress(value, fail, warn) {
+function readList(raw, name, fields, fail, warn, readItem) {
+  const value = raw[name];
   if (value === undefined || value === null) return [];
   if (!Array.isArray(value)) {
-    fail('press', `must be a list (got ${describe(value)})`);
+    fail(name, `must be a list (got ${describe(value)})`);
     return [];
   }
   return value.map((item, index) => {
-    const path = `press[${index}]`;
+    const path = `${name}[${index}]`;
     if (!isMapping(item)) {
-      fail(path, `must be a mapping with title, source, kind, date and url (got ${describe(item)})`);
+      fail(path, `must be a mapping with ${fields.join(', ')} (got ${describe(item)})`);
       return null;
     }
     for (const key of Object.keys(item)) {
-      if (!PRESS_FIELDS.includes(key)) warn(`unknown field "${path}.${key}" is ignored`);
+      if (!fields.includes(key)) warn(`unknown field "${path}.${key}" is ignored`);
     }
-    const field = fieldReader(item, `${path}.`, fail);
-    const entry = {
-      title: field.string('title', { required: true }),
-      source: field.string('source', { required: true }),
-      kind: field.oneOf('kind', PRESS_KINDS),
-      date: field.string('date'),
-      url: field.string('url', { required: true }),
-      lang: field.string('lang'),
-    };
-    if (entry.date && !isCalendarDate(entry.date)) {
-      fail(`${path}.date`, `must be a date in YYYY-MM-DD format, or empty if unknown (got ${describe(entry.date)})`);
-    }
-    if (entry.url && !isHttpUrl(entry.url)) {
-      fail(`${path}.url`, `must be an http(s) URL (got ${describe(entry.url)})`);
-    }
-    if (entry.lang && !LANG.test(entry.lang)) {
-      fail(`${path}.lang`, `must be a two-letter lowercase language code such as "it", or empty for English (got ${describe(entry.lang)})`);
-    }
-    return entry;
+    return readItem(fieldReader(item, `${path}.`, fail), path);
   }).filter(Boolean);
 }
 
 function fieldReader(obj, prefix, fail) {
   const isMissing = (value) => value === undefined || value === null || value === '';
-  return {
+  const reader = {
     string(key, { required = false } = {}) {
       const value = obj[key];
       if (isMissing(value)) {
@@ -159,8 +162,15 @@ function fieldReader(obj, prefix, fail) {
       if (!text && required) fail(prefix + key, 'is required');
       return text;
     },
-    oneOf(key, allowed) {
-      const value = obj[key];
+    repoPath(key, options) {
+      const text = reader.string(key, options);
+      if (!text) return '';
+      const path = resolveRepoPath(text);
+      if (!path) fail(prefix + key, `must be a path to a file inside the repository (got ${describe(text)})`);
+      return path ?? '';
+    },
+    oneOf(key, allowed, aliases = {}) {
+      const value = aliases[obj[key]] ?? obj[key];
       if (isMissing(value)) {
         fail(prefix + key, `is required (one of: ${allowed.join(', ')})`);
         return '';
@@ -183,28 +193,28 @@ function fieldReader(obj, prefix, fail) {
       }
       return value;
     },
-    boolean(key) {
+    boolean(key, { fallback }) {
       const value = obj[key];
-      if (isMissing(value)) {
-        fail(prefix + key, 'is required (true or false)');
-        return null;
-      }
+      if (isMissing(value)) return fallback;
       if (typeof value !== 'boolean') {
         fail(prefix + key, `must be true or false (got ${describe(value)})`);
-        return null;
+        return fallback;
       }
       return value;
     },
   };
+  return reader;
 }
 
 function* todoFields(data) {
   for (const [key, value] of Object.entries(data)) {
-    if (typeof value === 'string' && TODO.test(value)) yield [key, value];
+    if (typeof value === 'string' && TODO.test(value)) yield key;
   }
-  for (const [index, entry] of data.press.entries()) {
-    for (const [key, value] of Object.entries(entry)) {
-      if (TODO.test(value)) yield [`press[${index}].${key}`, value];
+  for (const list of ['screenshots', 'press']) {
+    for (const [index, entry] of data[list].entries()) {
+      for (const [key, value] of Object.entries(entry)) {
+        if (TODO.test(value)) yield `${list}[${index}].${key}`;
+      }
     }
   }
 }

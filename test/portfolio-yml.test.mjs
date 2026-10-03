@@ -39,6 +39,7 @@ test('a valid file is normalized with defaults for optional fields', () => {
     demo: '',
     code_public: true,
     note: '',
+    screenshots: [],
     press: [],
   });
 });
@@ -66,6 +67,7 @@ test('parses YAML, keeping unquoted dates as text', () => {
   assert.deepEqual(errors, []);
   assert.equal(data.code_public, false);
   assert.equal(data.period, '2023');
+  assert.equal(data.cover, 'docs/cover.png');
   assert.deepEqual(data.press, [
     { title: 'Il digitale oggi', source: 'JobOrienta', kind: 'event', date: '2023-11-24', url: 'https://example.com/event', lang: 'it' },
     { title: 'Article', source: 'Paper', kind: 'article', date: '', url: 'https://example.com/article', lang: '' },
@@ -105,7 +107,6 @@ test('every missing required field is reported by name', () => {
     `${prefix} "status" is required (one of: completed, in progress, archived)`,
     `${prefix} "role" is required`,
     `${prefix} "cover" is required`,
-    `${prefix} "code_public" is required (true or false)`,
   ]);
 });
 
@@ -134,10 +135,18 @@ test('slug must be lowercase-with-dashes', () => {
   assert.deepEqual(validate(project({ slug: 'spotify-stats-2' })).errors, []);
 });
 
-test('code_public must be a boolean', () => {
+test('code_public defaults to true and must be a boolean', () => {
+  assert.equal(validate(project({ code_public: undefined })).data.code_public, true);
+  assert.equal(validate(project({ code_public: false })).data.code_public, false);
   assert.deepEqual(validate(project({ code_public: 'yes' })).errors, [
     `${prefix} "code_public" must be true or false (got "yes")`,
   ]);
+});
+
+test('short category names are accepted', () => {
+  assert.equal(validate(project({ category: 'uni' })).data.category, 'university');
+  assert.equal(validate(project({ category: 'pers' })).data.category, 'personal');
+  assert.equal(validate(project({ category: 'comm' })).data.category, 'client');
 });
 
 test('text fields reject lists and mappings but accept numbers', () => {
@@ -148,12 +157,23 @@ test('text fields reject lists and mappings but accept numbers', () => {
   assert.equal(validate(project({ title: 2048 })).data.title, '2048');
 });
 
-test('cover must stay inside the repository; demo must be an http(s) URL', () => {
+test('cover must be a file inside the repository; demo must be an http(s) URL', () => {
   assert.deepEqual(validate(project({ cover: '../other/cover.png', demo: 'example.com' })).errors, [
-    `${prefix} "cover" must be a path inside the repository or an http(s) URL (got "../other/cover.png")`,
+    `${prefix} "cover" must be a path to a file inside the repository (got "../other/cover.png")`,
     `${prefix} "demo" must be an http(s) URL or empty (got "example.com")`,
   ]);
-  assert.deepEqual(validate(project({ cover: 'https://example.com/c.png', demo: 'https://example.com' })).errors, []);
+  assert.match(validate(project({ cover: 'https://example.com/c.png' })).errors[0], /"cover" must be a path to a file inside/);
+  assert.equal(validate(project({ cover: './docs/c.png', demo: 'https://example.com' })).data.cover, 'docs/c.png');
+});
+
+test('screenshots need a path inside the repository and alt text', () => {
+  const { data } = validate(project({ screenshots: [{ src: '/docs/home.png', alt: 'Home screen' }] }));
+  assert.deepEqual(data.screenshots, [{ src: 'docs/home.png', alt: 'Home screen' }]);
+  assert.deepEqual(validate(project({ screenshots: [{ src: '../x.png' }, 'x.png'] })).errors, [
+    `${prefix} "screenshots[0].src" must be a path to a file inside the repository (got "../x.png")`,
+    `${prefix} "screenshots[0].alt" is required`,
+    `${prefix} "screenshots[1]" must be a mapping with src, alt (got "x.png")`,
+  ]);
 });
 
 test('press items are validated field by field', () => {
@@ -173,7 +193,7 @@ test('press items are validated field by field', () => {
     `${prefix} "press[1].url" must be an http(s) URL (got "example.com")`,
     `${prefix} "press[1].lang" must be a two-letter lowercase language code such as "it", or empty for English (got "IT")`,
     `${prefix} "press[2].date" must be a date in YYYY-MM-DD format, or empty if unknown (got "2023-02-30")`,
-    `${prefix} "press[3]" must be a mapping with title, source, kind, date and url (got "not a mapping")`,
+    `${prefix} "press[3]" must be a mapping with title, source, kind, date, url, lang (got "not a mapping")`,
   ]);
 });
 
