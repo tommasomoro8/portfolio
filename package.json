@@ -11,5 +11,9 @@
   "scripts": {
     "setup": "git config core.hooksPath .githooks",
     "test": "node --test"
+  },
+  "dependencies": {
+    "js-yaml": "^5.4.2",
+    "marked": "^18.0.14"
   }
 }
