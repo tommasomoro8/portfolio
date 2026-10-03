@@ -1,0 +1,35 @@
+name: Tommaso Moro
+email: moroxtommaso@gmail.com
+github: https://github.com/tommasomoro8
+linkedin: https://www.linkedin.com/in/tommasomoro/
+
+education:
+  - title: BSc in Computer Science (L-31)
+    org: Ca' Foscari University of Venice
+    period: Oct 2024 – present
+    text: "Track: Information Technologies and Sciences."
+  - title: Five-month exchange program
+    org: A.R. MacNeill Secondary School, Vancouver, Canada
+    period: Aug 2022 – Jan 2023
+    text: "A semester of high school in Canada: independence, adaptability, and English every day."
+  - title: High school diploma, Applied Sciences
+    org: Liceo Statale Duca degli Abruzzi, Treviso
+    period: 2019 – 2024
+    text: "Where my digital reconstruction projects started: Treviso Cathedral, the Scrovegni Chapel, Café Guerbois."
+  - title: Languages
+    text: "Italian (native), English (B2)."
+
+experience:
+  - title: Sales associate, mobile department
+    org: MediaWorld, Olmi (Treviso)
+    period: Jun 2025 – Apr 2026
+    text: "Advising customers on smartphones and accessories, activating contracts and services, merchandising and restocking, after-sales support."
+  - title: Multiplex operator
+    org: The Space Cinema, Silea (Treviso)
+    period: Mar 2024 – Jan 2025
+    text: "Welcoming guests, ticket and concession sales, access control, handling issues in the theatres."
+    related_project: thespacecinema-schedule   # render a small tag linking to the project
+  - title: IT internship (two weeks)
+    org: Targa Telematics, Treviso
+    period: Jan 2024
+    text: "Hands-on work in a tech company and a first look at the ethical questions of applied AI."
