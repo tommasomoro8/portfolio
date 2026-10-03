@@ -2,6 +2,16 @@ name: Tommaso Moro
 email: moroxtommaso@gmail.com
 github: https://github.com/tommasomoro8
 linkedin: https://www.linkedin.com/in/tommasomoro/
+url: https://tommasomoro8.github.io/   # address of the published site, used for share previews
+
+bio: >-
+  Computer Science student at Ca' Foscari University of Venice. I started by rebuilding places
+  in 3D in high school; now I write software that solves concrete problems. Here are my projects
+  in chronological order, with what each one taught me.
+
+cta:
+  heading: "Curious about my work? Let's get in touch!"
+  text: "Whether it's a project, an internship, or just a chat about something you saw here, I'd be glad to hear from you."
 
 education:
   - title: BSc in Computer Science (L-31)
