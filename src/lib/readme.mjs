@@ -22,12 +22,13 @@ const IMG_TAG = /<img\b[^>]*>/gi;
  *
  * Returns:
  * - `title`: text of the first H1
- * - `pitch`: inline Markdown of the first blockquote after the H1
+ * - `pitch`: inline Markdown of the first blockquote after the H1, or else of the first text paragraph
  * - `hasMarkers`: whether a start and an end marker were found
  * - `sections`: `{ [key]: { heading, markdown } }` for the known H2s between the markers;
  *   `stack` also has `items` and `inputOutput` also has `blocks`
  * - `images`: images used inside the markers, `{ section, src, alt, path }`, where `path` is the
  *   repo-relative path of a local image and `null` for an external URL
+ * - `introImages`: images above the start marker, `{ src, alt, path }` (used to find the cover's alt text)
  * - `references`: link reference definitions of the whole README (`{ label: { href, title } }`),
  *   needed to render a section that uses `![alt][label]` defined outside it
  * - `warnings`: messages for anything missing or ignored
@@ -49,6 +50,8 @@ export function parseReadme(markdown, { source }) {
     hasMarkers: Boolean(start && end),
     sections: {},
     images: [],
+    introImages: collectImages({ key: 'intro', heading: 'intro', tokens: intro }, () => {})
+      .map(({ src, alt, path }) => ({ src, alt, path })),
     references: { ...tokens.links },
     warnings,
   };
@@ -127,16 +130,20 @@ function readIntro(tokens, warn) {
   if (h1 === -1) warn('missing "# Title" heading');
   const title = h1 === -1 ? '' : plainText(tokens[h1].tokens).trim();
 
-  let pitch = '';
-  for (const token of tokens.slice(h1 + 1)) {
+  let quote = '';
+  let paragraph = '';
+  for (const token of h1 === -1 ? [] : tokens.slice(h1 + 1)) {
     if (token.type === 'heading' && token.depth <= 2) break;
     // Skip GitHub alerts such as "> [!NOTE]", which are not a pitch.
     if (token.type === 'blockquote' && !/^\s*\[!\w+\]/.test(token.text)) {
-      pitch = token.text.replace(/\s+/g, ' ').trim();
+      quote = token.text;
       break;
     }
+    // A paragraph made only of images (badges, a cover) is not a pitch.
+    if (!paragraph && token.type === 'paragraph' && plainText(token.tokens).trim()) paragraph = token.text;
   }
-  if (!pitch) warn('missing pitch: add a "> one-sentence pitch" blockquote right after the title');
+  const pitch = (quote || paragraph).replace(/\s+/g, ' ').trim();
+  if (!pitch) warn('missing pitch: add a one-sentence paragraph or "> blockquote" right after the title');
   if (TODO.test(title)) warn('title still contains TODO');
   if (TODO.test(pitch)) warn('pitch still contains TODO');
   return { title, pitch };
@@ -152,7 +159,7 @@ function splitSections(tokens, warn) {
   for (const token of tokens) {
     if (token.type === 'heading' && token.depth === 2) {
       const heading = plainText(token.tokens).trim();
-      const known = SECTIONS.find((section) => section.heading.toLowerCase() === heading.toLowerCase());
+      const known = SECTIONS.find((section) => headingKey(section.heading) === headingKey(heading));
       if (!known) {
         warn(`unknown section "## ${heading}" inside the portfolio markers is ignored`);
       } else if (seen.has(known.key)) {
@@ -174,6 +181,11 @@ function splitSections(tokens, warn) {
     }
   }
   return sections;
+}
+
+// Headings match case-insensitively, ignoring a leading "The " ("The problem" = "Problem").
+function headingKey(heading) {
+  return heading.trim().toLowerCase().replace(/^the\s+/, '');
 }
 
 function readStackItems(tokens, warn) {

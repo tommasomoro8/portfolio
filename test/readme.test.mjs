@@ -139,7 +139,33 @@ test('missing title and pitch are reported', () => {
   assert.equal(result.title, '');
   assert.equal(result.pitch, '');
   assert.ok(result.warnings.includes('[test] README.md: missing "# Title" heading'));
-  assert.ok(result.warnings.includes('[test] README.md: missing pitch: add a "> one-sentence pitch" blockquote right after the title'));
+  assert.ok(result.warnings.includes('[test] README.md: missing pitch: add a one-sentence paragraph or "> blockquote" right after the title'));
+});
+
+test('README in the style of the chess repo: paragraph pitch, "The problem" headings, cover alt text', () => {
+  const markdown = [
+    '# Chess', '',
+    'A chess game for the browser.', '',
+    '[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)', '',
+    '![Game in progress](docs/screenshots/cover.png)', '',
+    '<!-- portfolio:start -->',
+    '## The problem', '', 'Problem text.', '',
+    '## The solution', '', 'Solution text.', '',
+    '<!-- portfolio:end -->', '',
+  ].join('\n');
+  const result = parse(markdown);
+  assert.equal(result.pitch, 'A chess game for the browser.');
+  assert.deepEqual(Object.keys(result.sections), ['problem', 'solution']);
+  assert.equal(result.sections.problem.heading, 'Problem');
+  assert.deepEqual(result.introImages, [
+    { src: 'https://img.shields.io/badge/license-MIT-blue', alt: 'License: MIT', path: null },
+    { src: 'docs/screenshots/cover.png', alt: 'Game in progress', path: 'docs/screenshots/cover.png' },
+  ]);
+});
+
+test('a blockquote pitch wins over an earlier paragraph; images alone are never a pitch', () => {
+  assert.equal(parse('# T\n\nIntro paragraph.\n\n> The pitch.\n').pitch, 'The pitch.');
+  assert.equal(parse('# T\n\n![Cover](c.png)\n\nText pitch.\n').pitch, 'Text pitch.');
 });
 
 test('the pitch must come before the first section heading', () => {
