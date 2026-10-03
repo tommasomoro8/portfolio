@@ -26,9 +26,13 @@ If something here is unclear or missing, ask me instead of guessing.
 - Never publish my phone number, home address or date of birth. Public contact = email only.
 
 ### Dependencies
-- Allowed without asking: `marked` (Markdown → HTML), `js-yaml`, `wrangler` (dev only).
+- Allowed without asking: `marked` (Markdown → HTML), `js-yaml`.
 - Anything else: ask first and explain why. No frontend framework, no CSS framework,
   no bundler. Plain HTML, CSS and a small vanilla JS file.
+- Lighthouse may be run with `npx` for audits; it is not a dependency.
+
+### Keep it simple
+- It's a portfolio. Prefer the simplest thing that works; don't over-engineer.
 
 ---
 
@@ -38,7 +42,7 @@ The site is **static**. Node.js runs only at build time, never as a server.
 Visitors never call the GitHub API.
 
 ```
-portfolio.config.yml ──► fetch ──► data/snapshot/ (committed) ──► build ──► dist/ ──► Cloudflare Pages
+portfolio.config.yml ──► fetch ──► data/snapshot/ (committed) ──► build ──► dist/ ──► GitHub Pages
    (which repos)        (online)    last good copy of every        (offline,
                                      project + its images           always works)
 ```
@@ -46,8 +50,8 @@ portfolio.config.yml ──► fetch ──► data/snapshot/ (committed) ──
 Two separate commands:
 
 - `npm run fetch` — online. For every project in `portfolio.config.yml`, download `README.md`
-  and `portfolio.yml` from its GitHub repo (plus referenced images), and update that project's
-  entry in `data/snapshot/`.
+  and `portfolio.yml` from its GitHub repo (plus referenced images) from
+  `raw.githubusercontent.com`, and update that project's entry in `data/snapshot/`.
 - `npm run build` — offline. Reads **only** `data/snapshot/` and `content/`, writes `dist/`.
 
 ### Resilience rules (important)
@@ -108,9 +112,10 @@ Every project repo contains `README.md` and `portfolio.yml`. The site reads them
 ```
 
 Parsing rules:
-- Pitch = first blockquote after the H1.
+- Pitch = first blockquote after the H1; if there is none, the first text paragraph after the H1.
 - Only content between the two markers is used on the site. Split it by H2; match headings
-  exactly (case-insensitive, trimmed). Unknown H2s inside the markers: warn, ignore.
+  exactly (case-insensitive, trimmed, a leading "The " is ignored, so `## The problem` works).
+  Unknown H2s inside the markers: warn, ignore.
 - Missing optional sections are fine. Missing required sections: warn, render the project anyway.
 - Relative image paths are resolved against the repo and downloaded (see resilience rules).
 
@@ -118,22 +123,27 @@ Parsing rules:
 ```yaml
 title: ""
 slug: ""                 # lowercase-with-dashes, unique
-category: ""             # university | school | personal | client
+category: ""             # university | school | personal | client (or uni | school | pers | comm)
 year: 2024               # used for timeline ordering
 period: ""               # e.g. "Mar 2024 – Jun 2024"
 status: ""               # completed | in progress | archived
 role: ""                 # e.g. "Solo", "Team of 4, backend"
 course: ""               # optional, university projects
-cover: docs/screenshots/cover.png
+cover: docs/screenshots/cover.png   # first image of the screenshots grid; its alt text is taken
+                                    # from the README image with the same path
 demo: ""                 # optional URL
-code_public: true        # false → show "Code not public" instead of the GitHub button
+code_public: true        # optional, default true; false → "Code not public" instead of the GitHub button
 note: ""                 # optional, e.g. "Spotify API in development mode: not publicly testable"
+screenshots:             # optional, shown after the cover in the screenshots grid
+  - src: docs/screenshots/home.png
+    alt: ""              # required
 press:
   - title: ""
     source: ""
     kind: ""             # article | competition | event | award
     date: ""             # YYYY-MM-DD, empty if unknown
     url: ""
+    lang: ""             # optional, e.g. "it" → the title is followed by "(Italian)"
 ```
 
 Validate every `portfolio.yml` (required keys, allowed enum values, date format) with clear
@@ -297,19 +307,22 @@ experience:
 
 ---
 
-## 8. Deployment (GitHub Actions → Cloudflare Pages)
+## 8. Deployment (GitHub Actions → GitHub Pages)
+
+The site is served at `https://tommasomoro8.github.io/` (this repo will be renamed to
+`tommasomoro8.github.io`). All links in the page are relative, so it also works under a sub-path.
 
 `.github/workflows/build-deploy.yml`:
 - Triggers: push to `main`, `workflow_dispatch`, daily `schedule`.
-- Steps: checkout → setup Node 20 with npm cache → `npm ci` → `npm run fetch`
+- Steps: checkout → setup Node 24 with npm cache → `npm ci` → `npm run fetch`
   (`continue-on-error: true`) → if `data/snapshot/` changed, commit it as
   `github-actions[bot]` with message `chore(data): refresh project snapshot` and push →
-  `npm test` → `npm run build` → deploy `dist/` with `cloudflare/wrangler-action`
-  (`pages deploy`).
-- Secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`. Use the workflow's `GITHUB_TOKEN`
-  for the GitHub API.
-- Least-privilege `permissions:` (`contents: write` only because of the snapshot commit).
-- Document in `README.md` how to create the Cloudflare Pages project and the secrets.
+  `npm test` → `npm run build` → upload `dist/` and deploy it with the official GitHub Pages
+  actions.
+- No secrets: the workflow's `GITHUB_TOKEN` is used for fetching.
+- Least-privilege `permissions:` per job (`contents: write` only because of the snapshot commit;
+  `pages: write` and `id-token: write` only on the deploy job).
+- Document in `README.md` how to enable GitHub Pages for the repo.
 
 ---
 
@@ -366,7 +379,7 @@ are not confirmed yet.
 | Café Guerbois in the metaverse | school | ? | Unreal Engine 5; backend in repo `server-ue5` |
 | Scrovegni Chapel | school | 2023 | Competition "To Digital Competence 4.0" |
 | Treviso Cathedral 3D reconstruction | school | ? | Website donated by the class |
-| Chess with minimax | personal | ? | |
+| Chess with minimax | personal | 2021 | Repo `tommasomoro8/chess` (the first one ready) |
 
 Press links already known (to be moved into each repo's `portfolio.yml`):
 - Café Guerbois — Antenna Tre Nordest (article):
