@@ -1,0 +1,14 @@
+# Fixture built from confirmed facts only (university, 2026, in progress). Everything else is TODO.
+title: Software Engineering course app   # TODO: confirm the real project name
+slug: software-engineering-app
+category: university
+year: 2026
+period: TODO
+status: in progress
+role: TODO
+course: Software Engineering
+cover: docs/screenshots/cover.png
+demo: ""
+code_public: true   # TODO: confirm whether the code is public
+note: ""
+press: []
