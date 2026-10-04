@@ -12,7 +12,7 @@ export const SECTIONS = [
   { key: 'recognition', heading: 'Recognition', required: false },
 ];
 
-const SUMMARY = /<!--\s*portfolio:summary\s*\n([\s\S]*?)\n\s*-->/;
+const SUMMARY = /<!--\s*portfolio:summary\s*\n([\s\S]*?)\n\s*-->/g;
 const MARKER = /<!--\s*portfolio:(start|end)\s*-->/gi;
 const TODO = /\bTODO\b/;
 const IMG_TAG = /<img\b[^>]*>/gi;
@@ -43,7 +43,7 @@ export function parseReadme(markdown, { source }) {
   // The lexer normalizes \r\n to \n; joining the raw tokens gives the normalized text back.
   const tokens = marked.lexer(markdown);
   const text = tokens.map((token) => token.raw).join('');
-  const summary = SUMMARY.exec(text);
+  const summary = findSummary(tokens, text);
   if (!summary) warn('no <!-- portfolio:summary --> block; the long text between the portfolio markers is used instead (add a short summary)');
   const { start, end } = findMarkers(tokens, summary ? () => {} : warn);
 
@@ -66,11 +66,14 @@ export function parseReadme(markdown, { source }) {
   const lexer = new Lexer();
   Object.assign(lexer.tokens.links, tokens.links);
   const regionTokens = lexer.lex(summary ? summary[1] : text.slice(start.index + start.length, end.index));
+  // Reference definitions written inside the region are needed to render it too.
+  result.references = { ...lexer.tokens.links };
   const where = summary ? 'the portfolio summary' : 'the portfolio markers';
 
   for (const section of splitSections(regionTokens, where, warn)) {
     const sectionMarkdown = section.tokens.map((token) => token.raw).join('').trim();
-    if (!sectionMarkdown) {
+    // Images are removed on the site, so a section holding only images counts as empty.
+    if (!visibleText(section.tokens).trim()) {
       warn(`section "## ${section.heading}" is empty`);
       continue;
     }
@@ -88,6 +91,21 @@ export function parseReadme(markdown, { source }) {
     if (required && !result.sections[key]) warn(`missing required section "## ${heading}"`);
   }
   return result;
+}
+
+// The summary block is an HTML comment, so it must start in a top-level HTML token: an example
+// of the block shown inside a code block is not the summary.
+function findSummary(tokens, text) {
+  const htmlRanges = [];
+  let offset = 0;
+  for (const token of tokens) {
+    if (token.type === 'html') htmlRanges.push([offset, offset + token.raw.length]);
+    offset += token.raw.length;
+  }
+  for (const match of text.matchAll(SUMMARY)) {
+    if (htmlRanges.some(([from, to]) => match.index >= from && match.index < to)) return match;
+  }
+  return null;
 }
 
 function findMarkers(tokens, warn) {
@@ -205,9 +223,9 @@ function readStackItems(tokens, warn) {
       return first ? plainText(first.tokens ?? [first]).trim() : '';
     });
   } else {
-    // Also accept a single comma-separated line.
+    // Also accept a single comma-separated line; commas inside parentheses don't split.
     const paragraph = tokens.find((token) => token.type === 'paragraph');
-    items = paragraph ? plainText(paragraph.tokens).split(/[,·]/) : [];
+    items = paragraph ? plainText(paragraph.tokens).split(/[,·](?![^()]*\))/) : [];
   }
   items = items.map((item) => item.replace(/\s+/g, ' ').trim()).filter(Boolean);
   if (!items.length) warn('section "## Stack" should be a list of technologies (one per item)');
@@ -247,6 +265,19 @@ function collectImages(tokens) {
 function attribute(tag, name) {
   const match = new RegExp(`\\s${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i').exec(tag);
   return match ? (match[1] ?? match[2] ?? match[3]) : undefined;
+}
+
+// The text a section shows on the site: like plainText, but HTML counts without its tags and comments.
+function visibleText(tokens = []) {
+  return tokens
+    .map((token) => {
+      if (token.type === 'image') return '';
+      if (token.type === 'html') return token.raw.replace(/<!--[\s\S]*?-->/g, '').replace(/<[^>]*>/g, '');
+      if (token.tokens) return visibleText(token.tokens);
+      if (token.type === 'list') return visibleText(token.items);
+      return token.text ?? '';
+    })
+    .join('');
 }
 
 function plainText(tokens = []) {

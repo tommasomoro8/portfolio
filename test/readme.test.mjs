@@ -175,14 +175,21 @@ test('fallback edge cases: setext title, GitHub alert before the pitch, markers 
   assert.equal(result.textSource, 'markers');
   // The end marker inside the code block is ignored; the real one shares an HTML block with a <p>.
   assert.match(result.sections.problem.markdown, /## Not a section/);
-  assert.equal(result.sections.solution.markdown, `<p align="center"><img src='/docs/root-relative.png' alt="Root-relative"></p>`);
   assert.deepEqual(result.sections.stack.items, ['Node.js & npm', 'Express']);
   assert.deepEqual(result.sections.inputOutput.blocks, [
     { lang: 'csv', code: 'date,shift' },
     { lang: 'text', code: 'Monday: 18:00' },
   ]);
   assert.deepEqual(result.references.diagram, { href: './docs/diagram.png', title: 'Diagram' });
-  assert.deepEqual(result.warnings, [NO_SUMMARY('edge')]);
+  // Sections made only of images are empty on the site (images are removed), so they count as missing.
+  assert.deepEqual(Object.keys(result.sections), ['problem', 'inputOutput', 'whatILearned', 'stack']);
+  assert.deepEqual(result.warnings, [
+    NO_SUMMARY('edge'),
+    '[edge] README.md: section "## Technical challenges" is empty',
+    '[edge] README.md: section "## Solution" is empty',
+    '[edge] README.md: missing required section "## Solution"',
+    '[edge] README.md: missing required section "## Technical challenges"',
+  ]);
 });
 
 test('a start marker without an end marker publishes nothing', () => {
@@ -267,6 +274,29 @@ test('Input → Output must contain exactly two code blocks', () => {
   assert.ok(result.warnings.includes(
     '[test] README.md: section "## Input → Output" should contain exactly two code blocks (input, then output); found 1',
   ));
+});
+
+test('a comma-separated Stack line does not split inside parentheses', () => {
+  const result = parse('# T\n\nP.\n\n<!-- portfolio:summary\n## Stack\nUnreal Engine 5 (Blueprints, C++), Node.js · SQLite\n-->\n');
+  assert.deepEqual(result.sections.stack.items, ['Unreal Engine 5 (Blueprints, C++)', 'Node.js', 'SQLite']);
+});
+
+test('a summary example inside a code block is not the summary', () => {
+  const markdown = '# T\n\nP.\n\n```markdown\n<!-- portfolio:summary\n## The problem\nExample.\n-->\n```\n\n<!-- portfolio:start -->\n## Problem\nReal long text.\n<!-- portfolio:end -->\n';
+  const result = parse(markdown);
+  assert.equal(result.textSource, 'markers');
+  assert.equal(result.sections.problem.markdown, 'Real long text.');
+});
+
+test('a section holding only images counts as empty', () => {
+  const result = parse(summaryReadme(`${FULL_SUMMARY}\n\n## Recognition\n![Medal](docs/medal.png)\n<!-- note -->`));
+  assert.equal(result.sections.recognition, undefined);
+  assert.ok(result.warnings.includes('[test] README.md: section "## Recognition" is empty'));
+});
+
+test('reference links defined inside the summary are kept for rendering', () => {
+  const result = parse(summaryReadme(`${FULL_SUMMARY.replace('a [link](https://example.com)', 'a [guide][g]')}\n\n[g]: https://example.com/guide`));
+  assert.equal(result.references.g.href, 'https://example.com/guide');
 });
 
 test('a Stack section without items is reported', () => {
