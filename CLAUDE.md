@@ -18,6 +18,11 @@ If something here is unclear or missing, ask me instead of guessing.
 - First task (Phase 0) enforces this mechanically, see section 9.
 - Commit messages: Conventional Commits, English, imperative, small focused commits
   (`feat(build): parse README portfolio sections`).
+- Work directly on `main`: commit and push to `main`, with no feature branches or pull requests.
+  Every push deploys the site; the tests and the build run first, so run `npm test` and
+  `npm run build` locally before pushing.
+- Commits are authored as `Tommaso Moro <moroxtommaso@gmail.com>` and are not signed. In a fresh
+  clone, set `user.name`, `user.email` and `commit.gpgsign false` for the repo and run `npm run setup`.
 
 ### Content
 - Never invent facts about me or my projects. Missing information becomes a visible
