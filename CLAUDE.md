@@ -56,7 +56,8 @@ Two separate commands:
 
 - `npm run fetch` — online. For every project in `portfolio.config.yml`, download `README.md`
   and `portfolio.yml` from its GitHub repo (plus the cover and the screenshots) from
-  `raw.githubusercontent.com`, and update that project's entry in `data/snapshot/`.
+  `raw.githubusercontent.com`, and update that project's entry in `data/snapshot/`. Only when a
+  project has no `screenshots` list is `docs/screenshots/` listed through the GitHub contents API.
 - `npm run build` — offline. Reads **only** `data/snapshot/` and `content/`, writes `dist/`.
 
 ### Resilience rules (important)
@@ -82,7 +83,7 @@ projects:
   - local: crm-agents                              # private code: content lives in content/local/crm-agents/
 ```
 
-A `local` entry has the same files as a repo (`README.md`, `portfolio.yml`, `screenshots/`)
+A `local` entry has the same files as a repo (`README.md`, `portfolio.yml`, `docs/screenshots/`)
 inside `content/local/<slug>/`, and `fetch` copies it into the snapshot like any other project.
 
 ---
@@ -382,10 +383,10 @@ summary plus anything you need from me. Don't start the next phase until I say s
 
 **Phase 2 — Build and design**
 - `npm run build` from a hand-written snapshot, full page per sections 5–7, `npm run dev`.
-- Self-hosted fonts, both themes, responsive, accessibility pass.
+- Self-hosted fonts, light only, responsive, accessibility pass.
 
 **Phase 3 — Fetch and resilience**
-- `npm run fetch` with per-repo fallback, image download and link rewriting, token support.
+- `npm run fetch` with per-repo fallback, cover and screenshot download, token support.
 - Tests that simulate a failing repo and a fully offline run: the snapshot must stay intact.
 
 **Phase 4 — CI and deploy**

@@ -131,7 +131,7 @@ portfolio.config.yml ──► fetch ──► data/snapshot/ (committed) ──
    ```
 
    For a project without a public repository, use `- local: <slug>` and put its `README.md`,
-   `portfolio.yml` and images in `content/local/<slug>/`.
+   `portfolio.yml` and images (cover and `docs/screenshots/`) in `content/local/<slug>/`.
 
 4. Run `npm run fetch && npm run dev`, check the warnings and the page, then commit
    `portfolio.config.yml` and `data/snapshot/`.
