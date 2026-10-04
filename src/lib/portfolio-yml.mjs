@@ -3,15 +3,24 @@ import { isHttpUrl, resolveRepoPath } from './repo-path.mjs';
 
 export const CATEGORIES = ['university', 'school', 'personal', 'client'];
 export const STATUSES = ['completed', 'in progress', 'archived'];
-export const PRESS_KINDS = ['article', 'competition', 'event', 'award'];
+export const PRESS_KINDS = ['article', 'contest', 'event', 'award'];
 
-const CATEGORY_ALIASES = { uni: 'university', pers: 'personal', comm: 'client' };
+// Short and older (Italian) values still accepted, converted to the values above.
+const CATEGORY_ALIASES = { uni: 'university', pers: 'personal', comm: 'client', scuola: 'school' };
+const STATUS_ALIASES = { completato: 'completed', 'in corso': 'in progress', archiviato: 'archived' };
+const PRESS_KIND_ALIASES = {
+  competition: 'contest',
+  articolo: 'article',
+  concorso: 'contest',
+  evento: 'event',
+  riconoscimento: 'award',
+};
 const PROJECT_FIELDS = [
   'title', 'slug', 'category', 'year', 'period', 'status', 'role',
   'course', 'cover', 'demo', 'code_public', 'note', 'screenshots', 'press',
 ];
 const PRESS_FIELDS = ['title', 'source', 'kind', 'date', 'url', 'lang'];
-const SCREENSHOT_FIELDS = ['src', 'alt'];
+const SCREENSHOT_FIELDS = ['path', 'alt'];
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -22,7 +31,7 @@ const TODO = /\bTODO\b/;
  * Parse and validate the text of a project's `portfolio.yml`.
  * `source` names the project in messages (e.g. `owner/repo` or `local:slug`).
  * Returns `{ data, errors, warnings }`; `data` is `null` when there are errors.
- * In `data`, `cover` and screenshot `src` are normalized repo-relative paths.
+ * In `data`, `cover` and screenshot `path` are normalized repo-relative paths.
  */
 export function parsePortfolioYml(text, { source }) {
   if (!text.replace(/^\s*#.*$/gm, '').trim()) {
@@ -62,7 +71,7 @@ export function validatePortfolio(raw, { source }) {
     category: field.oneOf('category', CATEGORIES, CATEGORY_ALIASES),
     year: field.year('year'),
     period: field.string('period', { required: true }),
-    status: field.oneOf('status', STATUSES),
+    status: field.oneOf('status', STATUSES, STATUS_ALIASES),
     role: field.string('role', { required: true }),
     course: field.string('course'),
     cover: field.repoPath('cover', { required: true }),
@@ -70,14 +79,14 @@ export function validatePortfolio(raw, { source }) {
     code_public: field.boolean('code_public', { fallback: true }),
     note: field.string('note'),
     screenshots: readList(raw, 'screenshots', SCREENSHOT_FIELDS, fail, warn, (item) => ({
-      src: item.repoPath('src', { required: true }),
+      path: item.repoPath('path', { required: true }),
       alt: item.string('alt', { required: true }),
     })),
     press: readList(raw, 'press', PRESS_FIELDS, fail, warn, (item, path) => {
       const entry = {
         title: item.string('title', { required: true }),
         source: item.string('source', { required: true }),
-        kind: item.oneOf('kind', PRESS_KINDS),
+        kind: item.oneOf('kind', PRESS_KINDS, PRESS_KIND_ALIASES),
         date: item.string('date'),
         url: item.string('url', { required: true }),
         lang: item.string('lang'),

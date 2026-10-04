@@ -15,7 +15,7 @@ note: ""
 press:
   - title: TODO   # title of the official document
     source: USR Veneto
-    kind: competition   # TODO: confirm (official document about the competition)
+    kind: contest   # TODO: confirm (official document about the competition)
     date: "2023-06-09"
     url: https://istruzioneveneto.gov.it/wp-content/uploads/2023/06/m_pi.AOODRVE.REGISTRO-UFFICIALEU.0015352.09-06-2023.pdf
     lang: it
@@ -27,7 +27,7 @@ press:
     lang: it
   - title: TODO   # title of the competition page
     source: Liceo Duca degli Abruzzi
-    kind: competition
+    kind: contest
     date: "2023-12-03"
     url: https://liceoduca.edu.it/2023/12/03/concorso-to-digital-competence-4-0/
     lang: it

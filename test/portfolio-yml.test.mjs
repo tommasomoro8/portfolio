@@ -143,6 +143,22 @@ test('code_public defaults to true and must be a boolean', () => {
   ]);
 });
 
+test('older Italian values are converted to the English ones', () => {
+  assert.equal(validate(project({ category: 'scuola' })).data.category, 'school');
+  assert.equal(validate(project({ status: 'completato' })).data.status, 'completed');
+  assert.equal(validate(project({ status: 'in corso' })).data.status, 'in progress');
+  assert.equal(validate(project({ status: 'archiviato' })).data.status, 'archived');
+  const kinds = ['articolo', 'concorso', 'evento', 'riconoscimento', 'competition', 'contest']
+    .map((kind) => validate(project({ press: [{ title: 'T', source: 'S', kind, url: 'https://example.com' }] })).data.press[0].kind);
+  assert.deepEqual(kinds, ['article', 'contest', 'event', 'award', 'contest', 'contest']);
+});
+
+test('role and period are free text, shown as written', () => {
+  const { data } = validate(project({ role: 'da solo', period: 'mar 2024 – giu 2024' }));
+  assert.equal(data.role, 'da solo');
+  assert.equal(data.period, 'mar 2024 – giu 2024');
+});
+
 test('short category names are accepted', () => {
   assert.equal(validate(project({ category: 'uni' })).data.category, 'university');
   assert.equal(validate(project({ category: 'pers' })).data.category, 'personal');
@@ -167,12 +183,12 @@ test('cover must be a file inside the repository; demo must be an http(s) URL', 
 });
 
 test('screenshots need a path inside the repository and alt text', () => {
-  const { data } = validate(project({ screenshots: [{ src: '/docs/home.png', alt: 'Home screen' }] }));
-  assert.deepEqual(data.screenshots, [{ src: 'docs/home.png', alt: 'Home screen' }]);
-  assert.deepEqual(validate(project({ screenshots: [{ src: '../x.png' }, 'x.png'] })).errors, [
-    `${prefix} "screenshots[0].src" must be a path to a file inside the repository (got "../x.png")`,
+  const { data } = validate(project({ screenshots: [{ path: '/docs/home.png', alt: 'Home screen' }] }));
+  assert.deepEqual(data.screenshots, [{ path: 'docs/home.png', alt: 'Home screen' }]);
+  assert.deepEqual(validate(project({ screenshots: [{ path: '../x.png' }, 'x.png'] })).errors, [
+    `${prefix} "screenshots[0].path" must be a path to a file inside the repository (got "../x.png")`,
     `${prefix} "screenshots[0].alt" is required`,
-    `${prefix} "screenshots[1]" must be a mapping with src, alt (got "x.png")`,
+    `${prefix} "screenshots[1]" must be a mapping with path, alt (got "x.png")`,
   ]);
 });
 
@@ -188,7 +204,7 @@ test('press items are validated field by field', () => {
   assert.equal(data, null);
   assert.deepEqual(errors, [
     `${prefix} "press[1].title" is required`,
-    `${prefix} "press[1].kind" must be one of: article, competition, event, award (got "interview")`,
+    `${prefix} "press[1].kind" must be one of: article, contest, event, award (got "interview")`,
     `${prefix} "press[1].date" must be a date in YYYY-MM-DD format, or empty if unknown (got "2023-6-9")`,
     `${prefix} "press[1].url" must be an http(s) URL (got "example.com")`,
     `${prefix} "press[1].lang" must be a two-letter lowercase language code such as "it", or empty for English (got "IT")`,
