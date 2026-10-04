@@ -55,7 +55,7 @@ portfolio.config.yml ──► fetch ──► data/snapshot/ (committed) ──
 Two separate commands:
 
 - `npm run fetch` — online. For every project in `portfolio.config.yml`, download `README.md`
-  and `portfolio.yml` from its GitHub repo (plus referenced images) from
+  and `portfolio.yml` from its GitHub repo (plus the cover and the screenshots) from
   `raw.githubusercontent.com`, and update that project's entry in `data/snapshot/`.
 - `npm run build` — offline. Reads **only** `data/snapshot/` and `content/`, writes `dist/`.
 
@@ -66,8 +66,8 @@ Two separate commands:
   when I remove it from `portfolio.config.yml`.
 - `npm run fetch` exits 0 if at least the snapshot is intact; the build must always be able to
   run from the last good snapshot. Losing the most recent changes is acceptable.
-- Images are downloaded into `data/snapshot/assets/<slug>/` and README links are rewritten to
-  point there. Never hotlink `raw.githubusercontent.com` from the site.
+- The cover and the screenshots are downloaded into `data/snapshot/assets/<slug>/` and served
+  from the site. Never hotlink `raw.githubusercontent.com` from the site.
 - Use `GITHUB_TOKEN` from the environment when present (higher rate limit). Work without it locally.
 
 ### Which projects appear
@@ -99,7 +99,18 @@ Every project repo contains `README.md` and `portfolio.yml`. The site reads them
 
 ![alt text](docs/screenshots/cover.png)
 
-<!-- portfolio:start -->
+<!-- portfolio:summary
+## The problem
+One or two sentences.
+## The solution
+## Input → Output            (optional: two code blocks, input then output)
+## Technical challenges
+## What I learned
+## Stack                     (a comma-separated line or a list)
+## Recognition               (optional)
+-->                          ← hidden on GitHub: the short text shown on the site
+
+<!-- portfolio:start -->      ← the long version, used only when there is no summary
 ## Problem
 ## Solution
 ## Input → Output            (optional)
@@ -118,41 +129,48 @@ Every project repo contains `README.md` and `portfolio.yml`. The site reads them
 
 Parsing rules:
 - Pitch = first blockquote after the H1; if there is none, the first text paragraph after the H1.
-- Only content between the two markers is used on the site. Split it by H2; match headings
-  exactly (case-insensitive, trimmed, a leading "The " is ignored, so `## The problem` works).
-  Unknown H2s inside the markers: warn, ignore.
-- Missing optional sections are fine. Missing required sections: warn, render the project anyway.
-- Relative image paths are resolved against the repo and downloaded (see resilience rules).
+- The text on the site comes from the hidden `<!-- portfolio:summary ... -->` block, extracted with
+  `<!--\s*portfolio:summary\s*\n([\s\S]*?)\n\s*-->` after normalizing `\r\n`. Its content is
+  Markdown, split by H2; match headings case-insensitively, trimmed, a leading "The " ignored
+  (`## The problem` = `## Problem`). Unknown H2s: warn, ignore.
+- Sections are always shown in the order above, whatever their order in the README. Missing
+  optional sections are fine; missing required ones: warn, render the project anyway, never an
+  empty heading. Paragraphs, lists, bold, italic and links are rendered.
+- No images in the text: `![…](…)` and `<img>` are removed (screenshots have their own gallery).
+- Without a summary block: use the long text between `<!-- portfolio:start -->` and
+  `<!-- portfolio:end -->` (images removed), and warn that the README needs a summary. Never
+  shorten text automatically.
 
 ### portfolio.yml
 ```yaml
 title: ""
 slug: ""                 # lowercase-with-dashes, unique
-category: ""             # university | school | personal | client (or uni | school | pers | comm)
+category: ""             # uni | school | pers | comm (also university | personal | client; old: scuola)
 year: 2024               # used for timeline ordering
-period: ""               # e.g. "Mar 2024 – Jun 2024"
-status: ""               # completed | in progress | archived
-role: ""                 # e.g. "Solo", "Team of 4, backend"
+period: ""               # free text, shown as written, e.g. "Mar 2024 – Jun 2024"
+status: ""               # completed | in progress | archived (old: completato | in corso | archiviato)
+role: ""                 # free text, shown as written, e.g. "solo", "team of 4, backend"
 course: ""               # optional, university projects
-cover: docs/screenshots/cover.png   # first image of the screenshots grid; its alt text is taken
-                                    # from the README image with the same path
+cover: docs/screenshots/cover.png   # image at the top of the project detail, not repeated in the
+                                    # gallery; alt text from `screenshots`, else the README image
 demo: ""                 # optional URL
 code_public: true        # optional, default true; false → "Code not public" instead of the GitHub button
 note: ""                 # optional, e.g. "Spotify API in development mode: not publicly testable"
-screenshots:             # optional, shown after the cover in the screenshots grid
-  - src: docs/screenshots/home.png
+screenshots:             # ordered gallery below the text; without it: every image in
+  - path: docs/screenshots/home.png    # docs/screenshots/ alphabetically, file name as alt (warn)
     alt: ""              # required
 press:
   - title: ""
     source: ""
-    kind: ""             # article | competition | event | award
+    kind: ""             # article | contest | event | award (old: articolo | concorso | evento | riconoscimento)
     date: ""             # YYYY-MM-DD, empty if unknown
     url: ""
     lang: ""             # optional, e.g. "it" → the title is followed by "(Italian)"
 ```
 
 Validate every `portfolio.yml` (required keys, allowed enum values, date format) with clear
-error messages that name the repo and the field.
+error messages that name the repo and the field. Old values are accepted and converted, so
+already published projects keep working. `press` may be an empty list.
 
 ---
 
@@ -190,7 +208,8 @@ Single page, in this order:
 
 1. **Header** — name, short bio, email, GitHub, LinkedIn; small anchor nav:
    Projects · Press & recognition · Education · Experience · Contact.
-2. **Category filters** — one toggle per category with project count. At least one stays active.
+2. **Category filter** — "All" plus one pill per category, with project counts; one category at a
+   time (clicking it again goes back to All); a hint line explains that each graph column is a category.
 3. **Projects timeline** — newest first (by `year`, then config order).
 4. **Press & recognition** — every `press` item of every project, newest first; undated items
    sorted by their project's year and shown as "<year> · date unknown". Each item links to the
@@ -198,17 +217,22 @@ Single page, in this order:
 5. **Education**
 6. **Experience** (jobs outside programming, plus the internship)
 7. **Contact CTA**
-8. **Footer** — one line: each project has a README on GitHub with the same content plus
+8. **Footer** — one line: each project has a README on GitHub with the same content plus the
    technical details.
 
 ### Project card (collapsed)
-Category label + status, title, pitch, badges (press count, award if any), "Open project".
+Category label (in the category colour) + status, title, pitch, badges (award, press mentions),
+"Open project".
 
 ### Project detail (expanded)
-Facts row (period, status, role, course), Problem, Solution, Input → Output (two code blocks
-side by side, stacked on mobile), note (if any), Technical challenges, What I learned,
-Stack (chips), screenshots grid, press list, buttons: "Code & README on GitHub" (or
-"Code not public"), "Live demo" if present, links to `extra_repos`.
+1. Header: cover image, facts (period, role, status, course), "Live demo" if `demo` is set,
+   `note` if set.
+2. The text from the summary, in the fixed order (Input → Output as two code blocks with an arrow,
+   stacked on mobile; Stack as chips).
+3. "Screenshots": the gallery from `screenshots`, without the cover.
+4. "Press & recognition" for the project, if any.
+5. "Read more on GitHub" (the README, with the full version) or "Code not public", plus links to
+   `extra_repos`.
 
 **Progressive enhancement:** all project content is rendered into the HTML at build time.
 Use `<details>`/`<summary>` so expanding works without JavaScript. `main.js` only adds the
@@ -219,19 +243,20 @@ category filters (hide the filter UI when JS is off) and recomputes visible year
 ## 6. Design
 
 Minimal, black and white. **The only colours on the page are the four category colours.**
+The page follows the style of the HTML draft provided in October 2026 (light only, 920px column,
+pill filters, rounded badges, commit-graph lanes with hollow nodes, bordered project detail).
 
 ### Tokens
 ```
-Light: --bg #FFFFFF  --soft #F4F4F4  --ink #000000  --muted #6B6B6B  --line #E2E2E2
-Dark:  --bg #000000  --soft #161616  --ink #FFFFFF  --muted #9A9A9A  --line #2A2A2A
+--bg #FFFFFF  --soft #F4F4F4  --ink #000000  --muted #6B6B6B  --line #E2E2E2
 
-Category      Light     Dark
-university    #6B4BD6   #9C84F0
-school        #1F6FD1   #5C9DF0
-personal      #13896A   #3CC39B
-client        #C7731E   #E79B4F
+Category      Lines, dots   Text (AA on white)
+university    #6B4BD6       #6B4BD6
+school        #1F6FD1       #1F6FD1
+personal      #13896A       #117D60
+client        #C7731E       #A15D18
 ```
-Dark mode follows `prefers-color-scheme`. Respect `prefers-reduced-motion`.
+Light only (`color-scheme: light only`). Respect `prefers-reduced-motion`.
 
 ### Type
 Schibsted Grotesk (400–800) for everything, JetBrains Mono only for stack chips and the
@@ -242,13 +267,13 @@ Google or any third party. System font fallbacks.
 Each category is a thin vertical lane (like a git graph). Each project is a node on its
 category's lane; that lane is drawn at full opacity in the project's row, the others faint.
 Year label in a narrow left column, shown once per year. On mobile the lanes narrow but stay.
-Category colour also appears as the left border of an expanded project and on its label.
-Everything else is black, white and greys: no shadows, no gradients, no rounded "cards".
+Category colour also appears as the left border of an expanded project and on its label,
+"Open project" link and tags. Everything else is black, white and greys: no shadows, no gradients.
 
 ### Quality bar
 - Responsive from 320px; no horizontal page scroll (wide blocks scroll inside themselves).
 - Accessible: semantic landmarks, visible focus, `aria-pressed` on filters, alt text on every
-  screenshot, AA contrast (check muted text and category colours on both themes).
+  screenshot, AA contrast (category colours used as text take the darker text shades).
 - No cookies, no analytics, no third-party requests at all.
 - `<title>`, meta description, Open Graph tags + an OG image, emoji or simple favicon.
 - Lighthouse ≥ 95 in every category.
@@ -265,8 +290,12 @@ University · School · Personal · Client work
 in 3D in high school; now I write software that solves concrete problems. Here are my projects
 in chronological order, with what each one taught me."
 
+### Section intros
+- Press & recognition: "Articles, competitions and events where my projects appeared, newest first."
+- Experience: "Jobs outside programming that taught me to work with customers and in a team."
+
 ### Contact CTA
-- Heading: "Curious about my work? Let's get in touch!"
+- Heading, on two lines: "Curious about my work?" / "Let's get in touch!"
 - Line: "Whether it's a project, an internship, or just a chat about something you saw here,
   I'd be glad to hear from you."
 - Buttons: "Email me" (`mailto:` with subject "Hi Tommaso") · "Connect on LinkedIn"

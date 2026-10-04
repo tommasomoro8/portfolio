@@ -40,14 +40,15 @@ portfolio.config.yml ──► fetch ──► data/snapshot/ (committed) ──
 ```
 
 - `npm run fetch` reads the files from `raw.githubusercontent.com` (using `GITHUB_TOKEN` when it
-  is set) and stores them, with the images the site shows, in `data/snapshot/`. If a project
+  is set) and stores them, with the cover and the screenshots, in `data/snapshot/`. If a project
   can't be fetched (network, rate limit, invalid `portfolio.yml`), its previous snapshot is kept.
   A project leaves the snapshot only when it is removed from `portfolio.config.yml`.
 - `npm run build` never goes online, so the site can always be rebuilt from the last good
   snapshot. The page makes no third-party requests: fonts are self-hosted and images are served
   from the site itself.
-- Warnings name the project and the problem (a missing section, a `TODO` left in the content,
-  an image that wasn't found), so both commands are worth a glance after editing a project.
+- Warnings name the project and the problem (a README without the summary block, a missing
+  section, a `TODO` left in the content, an image that wasn't found), so both commands are worth
+  a glance after editing a project.
 
 | Path                   | Contents                                                       |
 | ---------------------- | -------------------------------------------------------------- |
@@ -65,50 +66,61 @@ portfolio.config.yml ──► fetch ──► data/snapshot/ (committed) ──
    ```yaml
    title: Chess
    slug: chess                  # lowercase-with-dashes, unique
-   category: personal           # university | school | personal | client (or uni | pers | comm)
+   category: pers               # uni | school | pers | comm
    year: 2021                   # timeline order
    period: Mar 2021 – May 2021
    status: completed            # completed | in progress | archived
-   role: Solo
+   role: solo                   # free text, shown as written
    course: ""                   # optional
-   cover: docs/screenshots/cover.png
+   cover: docs/screenshots/cover.png   # shown at the top of the project, not in the gallery
    demo: https://example.com    # optional
    code_public: true            # optional, default true
    note: ""                     # optional
-   screenshots:                 # optional
-     - src: docs/screenshots/home.png
+   screenshots:                 # the gallery, in this order (without it: every image in docs/screenshots/)
+     - path: docs/screenshots/cover.png
+       alt: Game in progress
+     - path: docs/screenshots/home.png
        alt: Home screen with the three game modes
    press:                       # optional
      - title: Il digitale oggi
        source: JobOrienta
-       kind: event              # article | competition | event | award
+       kind: event              # article | contest | event | award
        date: 2023-11-24         # YYYY-MM-DD, or "" if unknown
        url: https://example.com
        lang: it                 # optional: shows "(Italian)" after the title
    ```
 
-2. In its `README.md`, put the pitch right after the title (a paragraph or a `>` quote) and wrap
-   the sections shown on the site in markers:
+2. In its `README.md`, put the pitch right after the title (a paragraph or a `>` quote) and add
+   the short text for the site in a hidden `portfolio:summary` comment (GitHub doesn't show it):
 
    ```markdown
    # Chess
 
    A chess game for the browser, with a minimax AI to play against.
 
-   <!-- portfolio:start -->
-   ## Problem
-   ## Solution
-   ## Input → Output          (optional: two code blocks, input then output)
-   ## Technical challenges
-   ## What I learned
-   ## Stack                   (a list: each item becomes a chip)
-   ## Recognition             (optional)
-   <!-- portfolio:end -->
+   <!-- portfolio:summary
+   ## The problem
+   One or two sentences.
 
-   Everything below the end marker stays on GitHub only.
+   ## The solution
+   Two or three sentences.
+
+   ## Technical challenges
+   - One point per line.
+
+   ## What I learned
+   - One point per line.
+
+   ## Stack
+   HTML, CSS, JavaScript (no libraries), Google Fonts
+   -->
    ```
 
-   Headings match without regard to case or a leading "The" (`## The problem` works).
+   Sections are shown in this order (plus the optional `## Input → Output`, two code blocks, and
+   `## Recognition`). Headings match without regard to case or a leading "The". Images in the
+   text are not shown: list them under `screenshots`. A README without the summary still works:
+   the long text between `<!-- portfolio:start -->` and `<!-- portfolio:end -->` is used, and a
+   warning asks for a summary.
 
 3. Add the repository to `portfolio.config.yml`:
 
