@@ -1,0 +1,7 @@
+# Projects shown on the site. Projects of the same year appear in this order.
+#
+#   - repo: owner/name                 # public GitHub repo with README.md and portfolio.yml
+#     extra_repos: [owner/other]       # optional, linked from the project, not parsed
+#   - local: slug                      # content in content/local/<slug>/ (same files as a repo)
+projects:
+  - repo: tommasomoro8/chess

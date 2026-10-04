@@ -1,0 +1,26 @@
+#!/bin/sh
+# Remove automated attribution lines from the commit message, then trim
+# trailing blank lines. Matching is case-insensitive.
+# Enable with: npm run setup (sets core.hooksPath to .githooks).
+
+msg_file="$1"
+[ -n "$msg_file" ] && [ -f "$msg_file" ] || exit 0
+
+tmp_file="$msg_file.tmp.$$"
+trap 'rm -f "$tmp_file"' EXIT
+
+awk '
+  {
+    line = tolower($0)
+    if (line ~ /co-authored-by:.*claude/) next
+    if (line ~ /generated with.*claude/) next
+    if (line ~ /claude-session:/) next
+    lines[++n] = $0
+  }
+  END {
+    while (n > 0 && lines[n] ~ /^[ \t\r]*$/) n--
+    for (i = 1; i <= n; i++) print lines[i]
+  }
+' "$msg_file" > "$tmp_file" || exit 1
+
+cat "$tmp_file" > "$msg_file"

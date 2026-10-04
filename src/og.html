@@ -1,0 +1,57 @@
+<!doctype html>
+<!-- Source of public/og.png (the share preview image). To regenerate it, open this file in a
+     browser at a 1200×630 viewport and save a screenshot as public/og.png. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Share image</title>
+<style>
+  @font-face {
+    font-family: "Schibsted Grotesk";
+    src: url("../public/fonts/schibsted-grotesk.woff2") format("woff2");
+    font-weight: 400 900;
+  }
+  html, body { margin: 0; }
+  body {
+    width: 1200px;
+    height: 630px;
+    display: flex;
+    background: #fff;
+    color: #000;
+    font-family: "Schibsted Grotesk", system-ui, sans-serif;
+  }
+  .lanes { display: flex; gap: 22px; padding-left: 96px; }
+  .lane { position: relative; width: 4px; }
+  .lane::before { content: ""; position: absolute; inset: 0; background: var(--c); opacity: 0.25; }
+  .lane::after {
+    content: "";
+    position: absolute;
+    top: var(--y);
+    left: -14px;
+    width: 32px;
+    height: 32px;
+    box-sizing: border-box;
+    border: 6px solid #fff;
+    border-radius: 50%;
+    background: var(--c);
+  }
+  .text { display: flex; flex-direction: column; justify-content: center; padding: 0 96px 0 80px; }
+  h1 { margin: 0; font-size: 104px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+  p { margin: 28px 0 0; font-size: 34px; line-height: 1.35; color: #000; }
+  .sections { margin-top: 44px; font-size: 26px; font-weight: 600; color: #6b6b6b; }
+</style>
+</head>
+<body>
+  <div class="lanes" aria-hidden="true">
+    <span class="lane" style="--c: #6b4bd6; --y: 150px"></span>
+    <span class="lane" style="--c: #1f6fd1; --y: 270px"></span>
+    <span class="lane" style="--c: #13896a; --y: 390px"></span>
+    <span class="lane" style="--c: #c7731e; --y: 480px"></span>
+  </div>
+  <div class="text">
+    <h1>Tommaso Moro</h1>
+    <p>Computer Science student at<br>Ca' Foscari University of Venice.</p>
+    <div class="sections">Projects · Press &amp; recognition · Education · Experience</div>
+  </div>
+</body>
+</html>

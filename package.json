@@ -1,0 +1,22 @@
+{
+  "name": "portfolio",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Static portfolio site built from the README of each project repository.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "setup": "git config core.hooksPath .githooks",
+    "fetch": "node src/fetch.mjs",
+    "build": "node src/build.mjs",
+    "dev": "node src/dev.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "js-yaml": "^5.4.2",
+    "marked": "^18.0.14"
+  }
+}
