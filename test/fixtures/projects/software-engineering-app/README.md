@@ -4,6 +4,23 @@
 
 ![TODO: describe the cover screenshot](docs/screenshots/cover.png)
 
+<!-- portfolio:summary
+## The problem
+TODO: one or two sentences.
+
+## The solution
+TODO: two or three sentences.
+
+## Technical challenges
+- TODO
+
+## What I learned
+- TODO
+
+## Stack
+TODO
+-->
+
 <!-- portfolio:start -->
 ## Problem
 

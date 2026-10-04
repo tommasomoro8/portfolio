@@ -4,6 +4,26 @@
 
 ![TODO: describe the cover image](docs/screenshots/cover.png)
 
+<!-- portfolio:summary
+## The problem
+TODO: one or two sentences.
+
+## The solution
+TODO: two or three sentences.
+
+## Technical challenges
+- TODO
+
+## What I learned
+- TODO
+
+## Stack
+TODO
+
+## Recognition
+Entry in the competition "To Digital Competence 4.0" (2023). TODO: result.
+-->
+
 <!-- portfolio:start -->
 ## Problem
 

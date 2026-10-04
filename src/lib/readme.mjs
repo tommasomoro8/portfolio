@@ -1,7 +1,7 @@
 import { Lexer, marked } from 'marked';
 import { isExternalUrl, resolveRepoPath } from './repo-path.mjs';
 
-/** Sections allowed between the portfolio markers, in display order. */
+/** Sections shown on the site, in display order (a leading "The " in the README heading is ignored). */
 export const SECTIONS = [
   { key: 'problem', heading: 'Problem', required: true },
   { key: 'solution', heading: 'Solution', required: true },
@@ -12,6 +12,7 @@ export const SECTIONS = [
   { key: 'recognition', heading: 'Recognition', required: false },
 ];
 
+const SUMMARY = /<!--\s*portfolio:summary\s*\n([\s\S]*?)\n\s*-->/;
 const MARKER = /<!--\s*portfolio:(start|end)\s*-->/gi;
 const TODO = /\bTODO\b/;
 const IMG_TAG = /<img\b[^>]*>/gi;
@@ -20,14 +21,16 @@ const IMG_TAG = /<img\b[^>]*>/gi;
  * Parse a project README.
  * `source` names the project in warnings (e.g. `owner/repo` or `local:slug`).
  *
+ * The text shown on the site comes from the hidden `<!-- portfolio:summary ... -->` block. When a
+ * README has no summary yet, the long text between `<!-- portfolio:start -->` and
+ * `<!-- portfolio:end -->` is used instead, with a warning. Images in the text are never shown.
+ *
  * Returns:
  * - `title`: text of the first H1
  * - `pitch`: inline Markdown of the first blockquote after the H1, or else of the first text paragraph
- * - `hasMarkers`: whether a start and an end marker were found
- * - `sections`: `{ [key]: { heading, markdown } }` for the known H2s between the markers;
+ * - `textSource`: where the sections come from: `"summary"`, `"markers"` or `"none"`
+ * - `sections`: `{ [key]: { heading, markdown } }` for the known H2s;
  *   `stack` also has `items` and `inputOutput` also has `blocks`
- * - `images`: images used inside the markers, `{ section, src, alt, path }`, where `path` is the
- *   repo-relative path of a local image and `null` for an external URL
  * - `introImages`: images above the start marker, `{ src, alt, path }` (used to find the cover's alt text)
  * - `references`: link reference definitions of the whole README (`{ label: { href, title } }`),
  *   needed to render a section that uses `![alt][label]` defined outside it
@@ -37,9 +40,12 @@ export function parseReadme(markdown, { source }) {
   const warnings = [];
   const warn = (message) => warnings.push(`[${source}] README.md: ${message}`);
 
+  // The lexer normalizes \r\n to \n; joining the raw tokens gives the normalized text back.
   const tokens = marked.lexer(markdown);
   const text = tokens.map((token) => token.raw).join('');
-  const { start, end } = findMarkers(tokens, warn);
+  const summary = SUMMARY.exec(text);
+  if (!summary) warn('no <!-- portfolio:summary --> block; the long text between the portfolio markers is used instead (add a short summary)');
+  const { start, end } = findMarkers(tokens, summary ? () => {} : warn);
 
   const intro = tokensBefore(tokens, start ? start.index : text.length);
   const { title, pitch } = readIntro(intro, warn);
@@ -47,22 +53,22 @@ export function parseReadme(markdown, { source }) {
   const result = {
     title,
     pitch,
-    hasMarkers: Boolean(start && end),
+    textSource: summary ? 'summary' : start && end ? 'markers' : 'none',
     sections: {},
-    images: [],
-    introImages: collectImages({ key: 'intro', heading: 'intro', tokens: intro }, () => {})
-      .map(({ src, alt, path }) => ({ src, alt, path })),
+    introImages: collectImages(intro),
     references: { ...tokens.links },
     warnings,
   };
-  if (!result.hasMarkers) return result;
+  if (result.textSource === 'none') return result;
 
-  // Re-lex the marked region on its own, keeping link references defined anywhere in the README.
+  // Lex the summary or the marked region on its own, keeping link references defined anywhere
+  // in the README.
   const lexer = new Lexer();
   Object.assign(lexer.tokens.links, tokens.links);
-  const regionTokens = lexer.lex(text.slice(start.index + start.length, end.index));
+  const regionTokens = lexer.lex(summary ? summary[1] : text.slice(start.index + start.length, end.index));
+  const where = summary ? 'the portfolio summary' : 'the portfolio markers';
 
-  for (const section of splitSections(regionTokens, warn)) {
+  for (const section of splitSections(regionTokens, where, warn)) {
     const sectionMarkdown = section.tokens.map((token) => token.raw).join('').trim();
     if (!sectionMarkdown) {
       warn(`section "## ${section.heading}" is empty`);
@@ -72,8 +78,10 @@ export function parseReadme(markdown, { source }) {
     if (section.key === 'stack') entry.items = readStackItems(section.tokens, warn);
     if (section.key === 'inputOutput') entry.blocks = readCodeBlocks(section.tokens, warn);
     if (TODO.test(sectionMarkdown)) warn(`section "## ${section.heading}" still contains TODO`);
+    if (summary && collectImages(section.tokens).length) {
+      warn(`images in "## ${section.heading}" are not shown; list screenshots in portfolio.yml instead`);
+    }
     result.sections[section.key] = entry;
-    result.images.push(...collectImages(section, warn));
   }
 
   for (const { key, heading, required } of SECTIONS) {
@@ -149,7 +157,7 @@ function readIntro(tokens, warn) {
   return { title, pitch };
 }
 
-function splitSections(tokens, warn) {
+function splitSections(tokens, where, warn) {
   const sections = [];
   const seen = new Set();
   let current = null;
@@ -161,7 +169,7 @@ function splitSections(tokens, warn) {
       const heading = plainText(token.tokens).trim();
       const known = SECTIONS.find((section) => headingKey(section.heading) === headingKey(heading));
       if (!known) {
-        warn(`unknown section "## ${heading}" inside the portfolio markers is ignored`);
+        warn(`unknown section "## ${heading}" in ${where} is ignored`);
       } else if (seen.has(known.key)) {
         warn(`duplicate section "## ${heading}" is ignored`);
       }
@@ -176,7 +184,7 @@ function splitSections(tokens, warn) {
     if (current) {
       current.tokens.push(token);
     } else if (!ignoring && token.type !== 'space' && !warnedPreamble) {
-      warn('content between <!-- portfolio:start --> and the first "##" heading is ignored');
+      warn(`content before the first "##" heading in ${where} is ignored`);
       warnedPreamble = true;
     }
   }
@@ -216,26 +224,17 @@ function readCodeBlocks(tokens, warn) {
   return blocks;
 }
 
-function collectImages(section, warn) {
+// Markdown images and <img> tags (not commented out), as `{ src, alt, path }`; `path` is the
+// repo-relative path of a local image and `null` for an external URL.
+function collectImages(tokens) {
   const images = [];
   const add = (src, alt) => {
     const target = (src ?? '').trim();
-    const label = `image "${target}" in "## ${section.heading}"`;
-    if (!target) {
-      warn(`image with an empty source in "## ${section.heading}" is ignored`);
-      return;
-    }
-    if (!alt.trim()) warn(`${label} has no alt text`);
-    if (isExternalUrl(target)) {
-      images.push({ section: section.key, src: target, alt, path: null });
-      return;
-    }
-    const path = resolveRepoPath(target);
-    if (path) images.push({ section: section.key, src: target, alt, path });
-    else warn(`${label} points outside the repository and is ignored`);
+    if (!target) return;
+    images.push({ src: target, alt, path: isExternalUrl(target) ? null : resolveRepoPath(target) });
   };
 
-  marked.walkTokens(section.tokens, (token) => {
+  marked.walkTokens(tokens, (token) => {
     if (token.type === 'image') add(token.href, token.text ?? '');
     if (token.type === 'html') {
       const html = token.raw.replace(/<!--[\s\S]*?-->/g, '');

@@ -20,7 +20,7 @@ for (const slug of slugs) {
 
     assert.deepEqual(yml.errors, []);
     assert.equal(yml.data.slug, slug);
-    assert.equal(readme.hasMarkers, true);
+    assert.equal(readme.textSource, 'summary');
     for (const { key, required } of SECTIONS) {
       if (required) assert.ok(readme.sections[key], `missing ${key}`);
     }
