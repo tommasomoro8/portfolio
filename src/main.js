@@ -1,33 +1,33 @@
-// Category filters for the projects timeline. Without JavaScript every project is shown
-// and the filter buttons stay hidden.
+// Category filter for the projects timeline: one category at a time, or All. Clicking the active
+// category again goes back to All. Without JavaScript every project is shown and the filter stays
+// hidden.
 (() => {
-  const filters = document.querySelector('.filters');
+  const filters = document.querySelector('.lanes');
   if (!filters) return;
-  const buttons = [...filters.querySelectorAll('button[data-category]')];
-  const projects = [...document.querySelectorAll('.timeline > .project')];
-  const isPressed = (button) => button.getAttribute('aria-pressed') === 'true';
+  const buttons = [...filters.querySelectorAll('.lane-btn')];
+  const rows = [...document.querySelectorAll('.timeline > .row')];
+  let current = 'all';
 
   // Show each year label only on the first visible project of that year.
   function update() {
-    const active = new Set(buttons.filter(isPressed).map((button) => button.dataset.category));
     let previousYear = null;
-    for (const project of projects) {
-      project.hidden = !active.has(project.dataset.category);
-      if (project.hidden) continue;
-      project.querySelector('.year').classList.toggle('is-repeat', project.dataset.year === previousYear);
-      previousYear = project.dataset.year;
+    for (const row of rows) {
+      row.hidden = current !== 'all' && row.dataset.category !== current;
+      if (row.hidden) continue;
+      row.querySelector('.year').textContent = row.dataset.year === previousYear ? '' : row.dataset.year;
+      previousYear = row.dataset.year;
     }
   }
 
   filters.addEventListener('click', (event) => {
-    const button = event.target.closest('button[data-category]');
+    const button = event.target.closest('.lane-btn');
     if (!button) return;
-    // At least one category stays active.
-    if (isPressed(button) && buttons.filter(isPressed).length === 1) return;
-    button.setAttribute('aria-pressed', String(!isPressed(button)));
+    current = button.dataset.category === current ? 'all' : button.dataset.category;
+    for (const other of buttons) other.setAttribute('aria-pressed', String(other.dataset.category === current));
     update();
   });
 
   filters.hidden = false;
+  document.querySelector('.lanes-hint').hidden = false;
   update();
 })();

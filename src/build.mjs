@@ -1,6 +1,6 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { CORE_SCHEMA, load } from 'js-yaml';
 import { renderInline, renderSection } from './lib/markdown.mjs';
@@ -10,6 +10,8 @@ import { isExternalUrl, resolveRepoPath } from './lib/repo-path.mjs';
 import { renderPage } from './templates/page.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
+const SCREENSHOTS_DIR = 'docs/screenshots';
+const IMAGE_FILE = /\.(png|jpe?g|webp|gif)$/i;
 
 /**
  * Build the site into `outDir`. Works offline: reads only `contentDir`, `snapshotDir`
@@ -69,16 +71,12 @@ function loadProject(entry, order, snapshotDir, warnings) {
   }
 
   const data = yml.data;
+  const assetsDir = join(snapshotDir, 'assets', data.slug);
   const assets = new Set();
-  // Returns the site URL of a downloaded image, or null (the image is then not shown).
-  const image = (src) => {
-    if (isExternalUrl(src)) {
-      warnings.push(`[${source}] external image "${src}" is not shown (the site loads no third-party files)`);
-      return null;
-    }
-    const path = resolveRepoPath(src);
-    if (!path || !existsSync(join(snapshotDir, 'assets', data.slug, path))) {
-      warnings.push(`[${source}] image "${src}" was not downloaded and is not shown`);
+  // Returns the site URL of a downloaded image (a repo path), or null: the image is then not shown.
+  const image = (path) => {
+    if (!existsSync(join(assetsDir, path))) {
+      warnings.push(`[${source}] image "${path}" was not downloaded and is not shown`);
       return null;
     }
     assets.add(path);
@@ -92,15 +90,24 @@ function loadProject(entry, order, snapshotDir, warnings) {
 
   const sections = {};
   for (const [key, section] of Object.entries(readme.sections)) {
-    sections[key] = renderSection(section.markdown, { references: readme.references, image, link });
+    sections[key] = renderSection(section.markdown, { references: readme.references, link });
   }
 
-  const coverAlt = readme.introImages.find((img) => img.path === data.cover)?.alt;
-  const screenshots = [
-    { src: data.cover, alt: coverAlt || `${data.title}: cover image` },
-    ...data.screenshots.filter((shot) => shot.src !== data.cover),
-  ]
-    .map((shot) => ({ url: image(shot.src), alt: shot.alt }))
+  // The cover heads the project's detail; the gallery shows the other screenshots in the listed
+  // order. Without a list, every image downloaded from docs/screenshots/ is shown, alphabetically,
+  // with its file name as alt text.
+  let shots = data.screenshots;
+  if (!shots.length) {
+    warnings.push(`[${source}] no "screenshots" in portfolio.yml; showing the images in ${SCREENSHOTS_DIR}/`);
+    shots = listScreenshots(assetsDir).map((path) => ({ path, alt: basename(path).replace(/\.[^.]+$/, '') }));
+  }
+  const coverUrl = image(data.cover);
+  const coverAlt = data.screenshots.find((shot) => shot.path === data.cover)?.alt
+    || readme.introImages.find((img) => img.path === data.cover)?.alt
+    || data.title;
+  const screenshots = shots
+    .filter((shot) => shot.path !== data.cover)
+    .map((shot) => ({ url: image(shot.path), alt: shot.alt }))
     .filter((shot) => shot.url);
 
   return {
@@ -111,12 +118,19 @@ function loadProject(entry, order, snapshotDir, warnings) {
     sections,
     stack: readme.sections.stack?.items ?? [],
     inputOutput: readme.sections.inputOutput?.blocks ?? null,
+    cover: coverUrl ? { url: coverUrl, alt: coverAlt } : null,
     screenshots,
     press: data.press.map((item) => ({ ...item, projectYear: data.year })),
-    codeUrl: entry.repo && data.code_public ? `https://github.com/${entry.repo}` : null,
+    readmeUrl: entry.repo && data.code_public ? `https://github.com/${entry.repo}#readme` : null,
     extraRepos: entry.extraRepos ?? [],
     assets,
   };
+}
+
+function listScreenshots(assetsDir) {
+  const dir = join(assetsDir, SCREENSHOTS_DIR);
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir).filter((name) => IMAGE_FILE.test(name)).sort().map((name) => `${SCREENSHOTS_DIR}/${name}`);
 }
 
 // Every press item of every project, newest first. Undated items are placed by their project's year.
@@ -126,6 +140,7 @@ function collectPress(projects) {
       ...item,
       projectSlug: project.slug,
       projectTitle: project.title,
+      projectCategory: project.category,
     })))
     .map((item) => ({ ...item, sortKey: item.date || String(item.projectYear) }))
     .sort((a, b) => (a.sortKey < b.sortKey ? 1 : a.sortKey > b.sortKey ? -1 : 0));

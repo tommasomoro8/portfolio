@@ -10,8 +10,14 @@ bio: >-
   in chronological order, with what each one taught me.
 
 cta:
-  heading: "Curious about my work? Let's get in touch!"
+  heading: |-                  # a new line here becomes a line break on the page
+    Curious about my work?
+    Let's get in touch!
   text: "Whether it's a project, an internship, or just a chat about something you saw here, I'd be glad to hear from you."
+
+intros:                        # optional line under a section heading
+  press: "Articles, competitions and events where my projects appeared, newest first."
+  experience: "Jobs outside programming that taught me to work with customers and in a team."
 
 education:
   - title: BSc in Computer Science (L-31)

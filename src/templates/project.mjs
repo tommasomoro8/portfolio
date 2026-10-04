@@ -6,52 +6,59 @@ export const CATEGORY_LABELS = {
   personal: 'Personal',
   client: 'Client work',
 };
+export const CATEGORIES = Object.keys(CATEGORY_LABELS);
 
-const SECTION_ORDER_BEFORE_IO = [['problem', 'Problem'], ['solution', 'Solution']];
-const SECTION_ORDER_AFTER_IO = [['technicalChallenges', 'Technical challenges'], ['whatILearned', 'What I learned']];
+const KIND_LABELS = { article: 'Article', contest: 'Contest', event: 'Event', award: 'Award' };
+const TEXT_SECTIONS = [
+  ['problem', 'Problem'],
+  ['solution', 'Solution'],
+  ['inputOutput', 'Input → Output'],
+  ['technicalChallenges', 'Technical challenges'],
+  ['whatILearned', 'What I learned'],
+  ['stack', 'Stack'],
+  ['recognition', 'Recognition'],
+];
 
-/** One row of the projects timeline. `lanes` are the categories drawn as graph lanes. */
-export function renderProject(project, { lanes, showYear }) {
+/** One row of the projects timeline: year, commit-graph lanes and the project card. */
+export function renderProject(project, { showYear }) {
   return `
-<li class="project" id="project-${e(project.slug)}" data-category="${project.category}" data-year="${project.year}">
-  <span class="year${showYear ? '' : ' is-repeat'}">${project.year}</span>
-  <span class="lanes" aria-hidden="true">${lanes.map((lane) => `<span class="lane${lane === project.category ? ' is-active' : ''}" data-category="${lane}"></span>`).join('')}</span>
-  <details>
-    <summary>
-      <span class="meta"><span class="cat">${CATEGORY_LABELS[project.category]}</span><span>${e(capitalize(project.status))}</span></span>
-      <h3 class="title">${e(project.title)}</h3>
+<li class="row" id="project-${e(project.slug)}" data-category="${project.category}" data-year="${project.year}">
+  <div class="year">${showYear ? project.year : ''}</div>
+  <div class="graph" aria-hidden="true">${CATEGORIES.map((category) => `<i data-category="${category}"${category === project.category ? ' class="on"' : ''}></i>`).join('')}<span class="node"></span></div>
+  <details class="card">
+    <summary class="card-head">
+      <span class="meta"><b>${CATEGORY_LABELS[project.category]}</b>, ${e(capitalize(project.status))}</span>
+      <h2>${e(project.title)}</h2>
       ${project.pitchHtml ? `<span class="pitch">${project.pitchHtml}</span>` : ''}
       ${renderBadges(project)}
-      <span class="toggle"><span class="when-closed">Open project</span><span class="when-open">Close project</span></span>
+      <span class="toggle"><span class="when-closed">Open project</span><span class="when-open">Close</span></span>
     </summary>
     <div class="detail">
-      ${renderFacts(project)}
-      ${SECTION_ORDER_BEFORE_IO.map(([key, heading]) => renderSection(project, key, heading)).join('')}
-      ${renderInputOutput(project)}
-      ${project.note ? `<p class="note">${e(project.note)}</p>` : ''}
-      ${SECTION_ORDER_AFTER_IO.map(([key, heading]) => renderSection(project, key, heading)).join('')}
-      ${project.stack.length ? `<h4>Stack</h4><ul class="chips">${project.stack.map((item) => `<li>${e(item)}</li>`).join('')}</ul>` : ''}
+      ${renderHead(project)}
+      ${TEXT_SECTIONS.map(([key, heading]) => renderSection(project, key, heading)).join('')}
       ${renderScreenshots(project)}
-      ${renderSection(project, 'recognition', 'Recognition')}
-      ${renderProjectPress(project)}
-      ${renderActions(project)}
+      ${renderPress(project)}
+      ${renderLinks(project)}
     </div>
   </details>
 </li>`;
 }
 
-export function formatPressDate(item) {
-  if (!item.date) return `${item.projectYear} · date unknown`;
-  const date = new Date(`${item.date}T00:00:00Z`);
-  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(date);
+export function kindLabel(kind) {
+  return KIND_LABELS[kind] ?? capitalize(kind);
 }
 
-/** The press title followed by "(Italian)" or another language name when `lang` is set. */
+export function formatDate(date) {
+  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+    .format(new Date(`${date}T00:00:00Z`));
+}
+
+/** The press title as a link, followed by "(Italian)" or another language name when `lang` is set. */
 export function renderPressTitle(item) {
   const language = item.lang && item.lang !== 'en'
     ? new Intl.DisplayNames(['en'], { type: 'language' }).of(item.lang)
     : '';
-  return `<a class="press-title" href="${e(item.url)}">${e(item.title)}</a>${language ? ` <span class="muted">(${e(language)})</span>` : ''}`;
+  return `<a href="${e(item.url)}" target="_blank" rel="noopener">${e(item.title)}</a>${language ? ` <span class="lang">(${e(language)})</span>` : ''}`;
 }
 
 export function capitalize(text) {
@@ -60,54 +67,71 @@ export function capitalize(text) {
 
 function renderBadges(project) {
   const badges = [];
+  if (project.press.some((item) => item.kind === 'award')) badges.push('<span class="badge award">Award</span>');
   if (project.press.length) {
-    badges.push(`${project.press.length} press ${project.press.length === 1 ? 'item' : 'items'}`);
+    badges.push(`<span class="badge">${project.press.length} press ${project.press.length === 1 ? 'mention' : 'mentions'}</span>`);
   }
-  if (project.press.some((item) => item.kind === 'award')) badges.push('Award');
-  if (!badges.length) return '';
-  return `<span class="badges">${badges.map((badge) => `<span class="badge">${badge}</span>`).join('')}</span>`;
+  return badges.length ? `<span class="badges">${badges.join('')}</span>` : '';
 }
 
-function renderFacts(project) {
+// Cover, facts, demo link and note.
+function renderHead(project) {
   const facts = [
     ['Period', project.period],
+    ['Role', project.role],
     ['Status', capitalize(project.status)],
-    ['Role', capitalize(project.role)],
     ['Course', project.course],
   ].filter(([, value]) => value);
-  return `<dl class="facts">${facts.map(([label, value]) => `<div><dt>${label}</dt><dd>${e(value)}</dd></div>`).join('')}</dl>`;
+  return `
+      ${project.cover ? `<img class="cover" src="${e(project.cover.url)}" alt="${e(project.cover.alt)}" loading="lazy">` : ''}
+      <dl class="facts">${facts.map(([label, value]) => `<div><dt>${label}</dt><dd>${e(value)}</dd></div>`).join('')}</dl>
+      ${project.demo ? `<div class="links"><a class="btn" href="${e(project.demo)}" target="_blank" rel="noopener">Live demo</a></div>` : ''}
+      ${project.note ? `<p class="note">${e(project.note)}</p>` : ''}`;
 }
 
 function renderSection(project, key, heading) {
+  if (key === 'stack') {
+    return project.stack.length
+      ? `<h3>Stack</h3><ul class="stack">${project.stack.map((item) => `<li>${e(item)}</li>`).join('')}</ul>`
+      : '';
+  }
+  if (key === 'inputOutput') {
+    const blocks = project.inputOutput ?? [];
+    if (!blocks.length) return '';
+    const [input, output] = blocks;
+    return `<h3>Input → Output</h3>
+      <div class="io">
+        <figure><figcaption>Input</figcaption><pre><code>${e(input.code)}</code></pre></figure>
+        ${output ? `<span class="arrow" aria-hidden="true">⟶</span>
+        <figure><figcaption>Output</figcaption><pre><code>${e(output.code)}</code></pre></figure>` : ''}
+      </div>`;
+  }
   const html = project.sections[key];
-  return html ? `<h4>${heading}</h4>${html}` : '';
-}
-
-function renderInputOutput(project) {
-  const blocks = project.inputOutput;
-  if (!blocks?.length) return '';
-  const labels = ['Input', 'Output'];
-  return `<h4>Input → Output</h4><div class="io">${blocks.slice(0, 2).map((block, index) => `
-    <figure><figcaption>${labels[index]}</figcaption><pre><code>${e(block.code)}</code></pre></figure>`).join('')}</div>`;
+  return html ? `<h3>${heading}</h3>${html}` : '';
 }
 
 function renderScreenshots(project) {
   if (!project.screenshots.length) return '';
-  return `<h4>Screenshots</h4><ul class="shots">${project.screenshots.map((shot) => `
-    <li><a href="${e(shot.url)}"><img src="${e(shot.url)}" alt="${e(shot.alt)}" loading="lazy"></a></li>`).join('')}</ul>`;
+  return `<h3>Screenshots</h3>
+      <div class="shots">${project.screenshots.map((shot) => `
+        <a class="shot" href="${e(shot.url)}"><img src="${e(shot.url)}" alt="${e(shot.alt)}" loading="lazy"></a>`).join('')}
+      </div>`;
 }
 
-function renderProjectPress(project) {
+function renderPress(project) {
   if (!project.press.length) return '';
-  return `<h4>Press &amp; recognition</h4><ul class="press-list compact">${project.press.map((item) => `
-    <li>${renderPressTitle(item)}<span class="small-meta">${e(item.source)} · ${capitalize(item.kind)} · ${formatPressDate(item)}</span></li>`).join('')}</ul>`;
+  return `<h3>Press &amp; recognition</h3>
+      <ul class="press">${project.press.map((item) => `
+        <li>${renderPressTitle(item)}<small>${[kindLabel(item.kind), e(item.source), item.date ? formatDate(item.date) : ''].filter(Boolean).join(', ')}</small></li>`).join('')}
+      </ul>`;
 }
 
-function renderActions(project) {
-  const actions = [];
-  if (project.codeUrl) actions.push(`<a class="button primary" href="${e(project.codeUrl)}">Code &amp; README on GitHub</a>`);
-  else actions.push('<span class="button disabled">Code not public</span>');
-  if (project.demo) actions.push(`<a class="button" href="${e(project.demo)}">Live demo</a>`);
-  for (const repo of project.extraRepos) actions.push(`<a class="button" href="https://github.com/${e(repo)}">${e(repo.split('/').pop())} on GitHub</a>`);
-  return `<p class="actions">${actions.join('')}</p>`;
+function renderLinks(project) {
+  const links = [
+    project.readmeUrl
+      ? `<a class="btn primary" href="${e(project.readmeUrl)}" target="_blank" rel="noopener">Read more on GitHub</a>`
+      : '<span class="btn" aria-disabled="true">Code not public</span>',
+    ...project.extraRepos.map((repo) => `<a class="btn" href="https://github.com/${e(repo)}" target="_blank" rel="noopener">${e(repo.split('/').pop())} on GitHub</a>`),
+  ];
+  return `<div class="links">${links.join('')}</div>`;
 }
