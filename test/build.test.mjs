@@ -45,6 +45,8 @@ ${summary ? SUMMARY(title) : ''}
 
 Long problem of ${title}. ![Long diagram](docs/long.png) <img src="docs/tag.png" alt="Tag">
 
+[![Linked screenshot](docs/long.png)](docs/long.png)
+
 <!-- a comment in the long text -->
 
 ## Solution
@@ -113,13 +115,15 @@ test('builds the page from a snapshot', async (t) => {
   assert.ok(warnings.some((warning) => warning.includes('[owner/broken] skipped')));
   assert.match(older, /<b>School<\/b>, Completed/);
 
-  // Progressive enhancement: <details> cards; the one-at-a-time filter is hidden until JavaScript runs.
+  // Progressive enhancement: <details> cards; the one-at-a-time filter is shown only with JavaScript
+  // (the "js" class is set before the first paint, so nothing shifts).
   assert.match(html, /<details class="card">\s*<summary class="card-head">/);
-  assert.match(html, /<div class="lanes" role="group" aria-label="Show category" hidden>/);
+  assert.match(html, /<script>document\.documentElement\.classList\.add\('js'\)<\/script>/);
+  assert.match(html, /<div class="lanes" role="group" aria-label="Show category">/);
   assert.match(html, /data-category="all" aria-pressed="true">All \(2\)<\/button>/);
   assert.match(html, /data-category="school" aria-pressed="false"><span class="sw"><\/span>School \(1\)<\/button>/);
   assert.match(html, /data-category="client" aria-pressed="false" disabled><span class="sw"><\/span>Client work \(0\)<\/button>/);
-  assert.match(html, /<p class="lanes-hint" hidden>/);
+  assert.match(html, /<p class="lanes-hint">/);
 
   // Header of the detail: cover with the alt text from portfolio.yml, facts, demo, note.
   assert.match(older, /<img class="cover" src="assets\/older\/docs\/cover\.png" alt="Cover alt from portfolio\.yml" loading="lazy">/);
@@ -182,6 +186,8 @@ test('without a summary block, the long text is used without images and the proj
 
   assert.match(detail, /Long problem of Legacy\./);
   assert.doesNotMatch(detail, /long\.png|tag\.png|Long diagram|a comment in the long text|<!--/);
+  // No empty links or paragraphs are left where the images were.
+  assert.doesNotMatch(detail, /<a\b[^>]*>\s*<\/a>|<p>\s*<\/p>/);
   assert.ok(warnings.includes('[owner/legacy] README.md: no <!-- portfolio:summary --> block; the long text between the portfolio markers is used instead (add a short summary)'));
 });
 
@@ -206,6 +212,22 @@ test('without a screenshots list, the images in docs/screenshots/ are shown alph
   assert.ok(warnings.includes('[owner/old] no "screenshots" in portfolio.yml; showing the images in docs/screenshots/'));
 });
 
+test('an empty screenshots list shows no gallery and does not fall back to docs/screenshots/', async (t) => {
+  const { dir, snapshotDir, outDir } = setup([{
+    id: 'owner/none', repo: 'owner/none', slug: 'none', extraRepos: [],
+    readme: readme('None'),
+    portfolio: yml({ title: 'None', slug: 'none', screenshots: [] }),
+  }], ['none/docs/cover.png', 'none/docs/screenshots/home.png']);
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+
+  const { warnings } = await build({ snapshotDir, outDir });
+  const detail = detailOf(readFileSync(join(outDir, 'index.html'), 'utf8'), 'none');
+
+  assert.match(detail, /class="cover" src="assets\/none\/docs\/cover\.png" alt="Cover of None"/);
+  assert.doesNotMatch(detail, />Screenshots<|home\.png/);
+  assert.ok(!warnings.some((warning) => warning.includes('no "screenshots"')));
+});
+
 test('an empty snapshot still builds a complete page', async (t) => {
   const { dir, snapshotDir, outDir } = setup([]);
   t.after(() => rmSync(dir, { recursive: true, force: true }));
@@ -216,7 +238,7 @@ test('an empty snapshot still builds a complete page', async (t) => {
   for (const id of ['education', 'experience', 'contact']) assert.match(html, new RegExp(`id="${id}"`));
   assert.match(html, /<h2 id="cta-title">Curious about my work\?<br>Let&#39;s get in touch!<\/h2>/);
   assert.match(html, /href="mailto:moroxtommaso@gmail\.com\?subject=Hi%20Tommaso">Email me/);
-  assert.match(html, /<span class="d">Languages<\/span>\s*<div>\s*<h3>Italian \(native\), English \(B2\)\.<\/h3>/);
+  assert.match(html, /<span class="d">Languages<\/span>\s*<div>\s*<h3>Italian \(native\), English \(B2\)<\/h3>/);
 });
 
 test('an experience entry links to its related project when that project is on the site', async (t) => {

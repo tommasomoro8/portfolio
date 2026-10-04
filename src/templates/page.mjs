@@ -35,6 +35,7 @@ ${url ? `<meta property="og:url" content="${e(url)}">
 <meta name="twitter:card" content="summary_large_image">` : ''}
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/schibsted-grotesk.woff2" as="font" type="font/woff2" crossorigin>
+<script>document.documentElement.classList.add('js')</script>
 <link rel="stylesheet" href="styles.css">
 <script src="main.js" defer></script>
 </head>
@@ -82,13 +83,14 @@ function renderProjects(projects) {
     previousYear = project.year;
     return renderProject(project, { showYear });
   });
-  // The filters need JavaScript, so they stay hidden until main.js shows them.
+  // The filter needs JavaScript: the CSS shows it only when <html> has the "js" class, set by an
+  // inline script before the first paint, so the page does not shift when main.js runs.
   return `<section id="projects" aria-label="Projects">
-  <div class="lanes" role="group" aria-label="Show category" hidden>
+  <div class="lanes" role="group" aria-label="Show category">
     <button type="button" class="lane-btn all" data-category="all" aria-pressed="true">All (${projects.length})</button>
     ${CATEGORIES.map((category) => `<button type="button" class="lane-btn" data-category="${category}" aria-pressed="false"${count(category) ? '' : ' disabled'}><span class="sw"></span>${CATEGORY_LABELS[category]} (${count(category)})</button>`).join('\n    ')}
   </div>
-  <p class="lanes-hint" hidden>Each column in the graph is a category. Pick one to see only its projects.</p>
+  <p class="lanes-hint">Each column in the graph is a category. Pick one to see only its projects.</p>
   <ol class="timeline" aria-label="Projects">${rows.join('')}
   </ol>
 </section>`;
@@ -120,7 +122,7 @@ function renderEntries(id, heading, entries, projects, intro) {
     <li${related ? ` data-category="${related.category}"` : ''}>
       <span class="d">${e(entry.period || entry.title)}</span>
       <div>
-        <h3>${e(entry.period ? entry.title : entry.text)}</h3>
+        <h3>${e(entry.period ? entry.title : entry.text.replace(/\.$/, ''))}</h3>
         ${entry.org ? `<span class="where">${e(entry.org)}</span>` : ''}
         ${entry.period && entry.text ? `<p>${e(entry.text)}</p>` : ''}
         ${related ? `<a class="tag" href="#project-${e(related.slug)}">Related project: ${e(related.title)}</a>` : ''}

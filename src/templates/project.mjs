@@ -8,7 +8,7 @@ export const CATEGORY_LABELS = {
 };
 export const CATEGORIES = Object.keys(CATEGORY_LABELS);
 
-const KIND_LABELS = { article: 'Article', contest: 'Contest', event: 'Event', award: 'Award' };
+const KIND_LABELS = { article: 'Article', contest: 'Competition', event: 'Event', award: 'Award' };
 const TEXT_SECTIONS = [
   ['problem', 'Problem'],
   ['solution', 'Solution'],

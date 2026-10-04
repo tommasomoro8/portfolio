@@ -1,6 +1,6 @@
 // Category filter for the projects timeline: one category at a time, or All. Clicking the active
-// category again goes back to All. Without JavaScript every project is shown and the filter stays
-// hidden.
+// category again goes back to All. Without JavaScript every project is shown and the CSS keeps the
+// filter hidden.
 (() => {
   const filters = document.querySelector('.lanes');
   if (!filters) return;
@@ -27,7 +27,5 @@
     update();
   });
 
-  filters.hidden = false;
-  document.querySelector('.lanes-hint').hidden = false;
   update();
 })();

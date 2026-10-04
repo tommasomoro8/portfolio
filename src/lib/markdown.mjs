@@ -27,15 +27,20 @@ export function renderSection(markdown, { references = {}, link }) {
   const tokens = lexer.lex(markdown);
   sectionMarked.walkTokens(tokens, (token) => {
     if (token.type === 'heading') token.depth = Math.min(token.depth + 1, 6);
-    if (token.type === 'link') token.href = link(token.href);
-    if (token.type === 'image') {
+    // An image, or a link around nothing but images, disappears.
+    const onlyImages = token.type === 'link' && token.tokens.every((child) => child.type === 'image' || !child.raw.trim());
+    if (token.type === 'image' || onlyImages) {
       token.type = 'text';
       token.text = '';
       delete token.tokens;
     }
+    if (token.type === 'link') token.href = link(token.href);
     if (token.type === 'html') token.text = token.text.replace(/<!--[\s\S]*?-->/g, '').replace(/<img\b[^>]*>/gi, '');
   });
-  return sectionMarked.parser(tokens);
+  // Drop the links and paragraphs that the removed images leave empty.
+  return sectionMarked.parser(tokens)
+    .replace(/<a\b[^>]*>\s*<\/a>/gi, '')
+    .replace(/<p\b[^>]*>\s*<\/p>\n?/gi, '');
 }
 
 /** Render inline Markdown (a pitch) without links or images. */
