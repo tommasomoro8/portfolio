@@ -39,7 +39,7 @@ test('a valid file is normalized with defaults for optional fields', () => {
     demo: '',
     code_public: true,
     note: '',
-    screenshots: [],
+    screenshots: null,
     press: [],
   });
 });
@@ -180,6 +180,11 @@ test('cover must be a file inside the repository; demo must be an http(s) URL', 
   ]);
   assert.match(validate(project({ cover: 'https://example.com/c.png' })).errors[0], /"cover" must be a path to a file inside/);
   assert.equal(validate(project({ cover: './docs/c.png', demo: 'https://example.com' })).data.cover, 'docs/c.png');
+});
+
+test('an absent screenshots field is null; an empty list stays empty', () => {
+  assert.equal(validate(project()).data.screenshots, null);
+  assert.deepEqual(validate(project({ screenshots: [] })).data.screenshots, []);
 });
 
 test('screenshots need a path inside the repository and alt text', () => {

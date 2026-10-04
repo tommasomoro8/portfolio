@@ -83,11 +83,14 @@ const snapshot = (snapshotDir) => JSON.parse(readFileSync(join(snapshotDir, 'pro
 test('first fetch: stores README, portfolio.yml, the cover and the listed screenshots (not README images)', async (t) => {
   const env = setup('projects:\n  - repo: me/alpha\n    extra_repos: [me/server]\n');
   t.after(() => rmSync(env.dir, { recursive: true, force: true }));
-  const { fetch } = fakeFetch(repoFiles('me/alpha', 'alpha'));
+  // The README's own image is available, but the site never shows it, so it is not downloaded.
+  const { fetch, calls } = fakeFetch({ ...repoFiles('me/alpha', 'alpha'), [`${RAW}/me/alpha/HEAD/docs/readme-only.png`]: 'readme-only' });
 
   const result = await refreshSnapshot({ ...env, fetch });
 
   assert.deepEqual(result.updated, ['me/alpha']);
+  assert.deepEqual(result.warnings, []);
+  assert.ok(!calls.some((call) => call.url.endsWith('readme-only.png')));
   assert.deepEqual(snapshot(env.snapshotDir), [{
     id: 'me/alpha', repo: 'me/alpha', slug: 'alpha', extraRepos: ['me/server'],
     readme: readme('alpha'), portfolio: yml('alpha'),

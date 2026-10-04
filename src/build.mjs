@@ -97,12 +97,12 @@ function loadProject(entry, order, snapshotDir, warnings) {
   // order. Without a list, every image downloaded from docs/screenshots/ is shown, alphabetically,
   // with its file name as alt text.
   let shots = data.screenshots;
-  if (!shots.length) {
+  if (!shots) {
     warnings.push(`[${source}] no "screenshots" in portfolio.yml; showing the images in ${SCREENSHOTS_DIR}/`);
     shots = listScreenshots(assetsDir).map((path) => ({ path, alt: basename(path).replace(/\.[^.]+$/, '') }));
   }
   const coverUrl = image(data.cover);
-  const coverAlt = data.screenshots.find((shot) => shot.path === data.cover)?.alt
+  const coverAlt = data.screenshots?.find((shot) => shot.path === data.cover)?.alt
     || readme.introImages.find((img) => img.path === data.cover)?.alt
     || data.title;
   const screenshots = shots

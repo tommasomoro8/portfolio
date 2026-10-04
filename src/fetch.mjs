@@ -108,8 +108,8 @@ async function loadProject(entry, source, warnings) {
 
   // The site shows the cover and the screenshots listed in portfolio.yml. Without a list, it
   // falls back to every image in docs/screenshots/, in alphabetical order.
-  let screenshots = yml.data.screenshots.map((shot) => shot.path);
-  if (!screenshots.length) {
+  let screenshots = (yml.data.screenshots ?? []).map((shot) => shot.path);
+  if (!yml.data.screenshots) {
     warnings.push(`[${entry.id}] no "screenshots" in portfolio.yml; using the images in ${SCREENSHOTS_DIR}/ (add the list)`);
     try {
       screenshots = (await source.list(SCREENSHOTS_DIR))

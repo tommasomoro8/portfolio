@@ -31,7 +31,8 @@ const TODO = /\bTODO\b/;
  * Parse and validate the text of a project's `portfolio.yml`.
  * `source` names the project in messages (e.g. `owner/repo` or `local:slug`).
  * Returns `{ data, errors, warnings }`; `data` is `null` when there are errors.
- * In `data`, `cover` and screenshot `path` are normalized repo-relative paths.
+ * In `data`, `cover` and screenshot `path` are normalized repo-relative paths; `screenshots` is
+ * `null` when the field is absent (an empty list means "no gallery").
  */
 export function parsePortfolioYml(text, { source }) {
   if (!text.replace(/^\s*#.*$/gm, '').trim()) {
@@ -78,7 +79,7 @@ export function validatePortfolio(raw, { source }) {
     demo: field.string('demo'),
     code_public: field.boolean('code_public', { fallback: true }),
     note: field.string('note'),
-    screenshots: readList(raw, 'screenshots', SCREENSHOT_FIELDS, fail, warn, (item) => ({
+    screenshots: raw.screenshots == null ? null : readList(raw, 'screenshots', SCREENSHOT_FIELDS, fail, warn, (item) => ({
       path: item.repoPath('path', { required: true }),
       alt: item.string('alt', { required: true }),
     })),
@@ -220,7 +221,7 @@ function* todoFields(data) {
     if (typeof value === 'string' && TODO.test(value)) yield key;
   }
   for (const list of ['screenshots', 'press']) {
-    for (const [index, entry] of data[list].entries()) {
+    for (const [index, entry] of (data[list] ?? []).entries()) {
       for (const [key, value] of Object.entries(entry)) {
         if (TODO.test(value)) yield `${list}[${index}].${key}`;
       }
