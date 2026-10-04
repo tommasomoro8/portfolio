@@ -6,8 +6,16 @@ import { dirname, join, relative } from 'node:path';
 import { refreshSnapshot } from '../src/fetch.mjs';
 
 const RAW = 'https://raw.githubusercontent.com';
+const API = 'https://api.github.com/repos';
 
-const yml = (slug, extra = '') => `title: ${slug}
+const SHOTS = `screenshots:
+  - path: docs/cover.png
+    alt: Cover
+  - path: docs/shot.png
+    alt: Shot
+`;
+
+const yml = (slug, extra = SHOTS) => `title: ${slug}
 slug: ${slug}
 category: personal
 year: 2024
@@ -24,7 +32,7 @@ const readme = (title) => `# ${title}
 <!-- portfolio:start -->
 ## Problem
 
-Text ![Shot](docs/shot.png) ![Badge](https://img.shields.io/x.svg)
+Text ![Only in the README](docs/readme-only.png) ![Badge](https://img.shields.io/x.svg)
 <!-- portfolio:end -->
 `;
 
@@ -72,7 +80,7 @@ function tree(dir) {
 
 const snapshot = (snapshotDir) => JSON.parse(readFileSync(join(snapshotDir, 'projects.json'), 'utf8')).projects;
 
-test('first fetch: stores README, portfolio.yml and the images the site uses', async (t) => {
+test('first fetch: stores README, portfolio.yml, the cover and the listed screenshots (not README images)', async (t) => {
   const env = setup('projects:\n  - repo: me/alpha\n    extra_repos: [me/server]\n');
   t.after(() => rmSync(env.dir, { recursive: true, force: true }));
   const { fetch } = fakeFetch(repoFiles('me/alpha', 'alpha'));
@@ -226,4 +234,80 @@ test('an invalid config is an error and does not touch the snapshot', async (t) 
     await assert.rejects(refreshSnapshot({ ...env, fetch: fakeFetch({}).fetch }), /portfolio\.config\.yml/);
     assert.ok(!existsSync(env.snapshotDir));
   }
+});
+
+test('without a screenshots list, the images in docs/screenshots/ are used in alphabetical order', async (t) => {
+  const env = setup('projects:\n  - repo: me/alpha\n');
+  t.after(() => rmSync(env.dir, { recursive: true, force: true }));
+  const listing = [
+    { name: 'b.png', type: 'file' },
+    { name: 'a.jpg', type: 'file' },
+    { name: 'notes.txt', type: 'file' },
+    { name: 'old', type: 'dir' },
+  ];
+  const { fetch } = fakeFetch({
+    [`${RAW}/me/alpha/HEAD/README.md`]: readme('alpha'),
+    [`${RAW}/me/alpha/HEAD/portfolio.yml`]: yml('alpha', ''),
+    [`${RAW}/me/alpha/HEAD/docs/cover.png`]: 'cover',
+    [`${API}/me/alpha/contents/docs/screenshots`]: JSON.stringify(listing),
+    [`${RAW}/me/alpha/HEAD/docs/screenshots/a.jpg`]: 'a',
+    [`${RAW}/me/alpha/HEAD/docs/screenshots/b.png`]: 'b',
+  });
+
+  const result = await refreshSnapshot({ ...env, fetch });
+
+  assert.deepEqual(result.updated, ['me/alpha']);
+  assert.deepEqual(result.warnings, ['[me/alpha] no "screenshots" in portfolio.yml; using the images in docs/screenshots/ (add the list)']);
+  assert.deepEqual(tree(join(env.snapshotDir, 'assets')), {
+    'alpha/docs/cover.png': 'cover',
+    'alpha/docs/screenshots/a.jpg': 'a',
+    'alpha/docs/screenshots/b.png': 'b',
+  });
+});
+
+test('without a screenshots list or a docs/screenshots/ folder, only the cover is stored', async (t) => {
+  const env = setup('projects:\n  - repo: me/alpha\n');
+  t.after(() => rmSync(env.dir, { recursive: true, force: true }));
+  const files = { ...repoFiles('me/alpha', 'alpha'), [`${RAW}/me/alpha/HEAD/portfolio.yml`]: yml('alpha', '') };
+
+  const result = await refreshSnapshot({ ...env, fetch: fakeFetch(files).fetch });
+
+  assert.deepEqual(result.updated, ['me/alpha']);
+  assert.deepEqual(Object.keys(tree(join(env.snapshotDir, 'assets'))), ['alpha/docs/cover.png']);
+});
+
+test('a failing docs/screenshots/ listing fails the project like any other download', async (t) => {
+  const env = setup('projects:\n  - repo: me/alpha\n');
+  t.after(() => rmSync(env.dir, { recursive: true, force: true }));
+  const files = { ...repoFiles('me/alpha', 'alpha'), [`${RAW}/me/alpha/HEAD/portfolio.yml`]: yml('alpha', '') };
+  const { fetch: serve } = fakeFetch(files);
+  const fetch = async (url, options) => (url.startsWith(API) ? new Response('Forbidden', { status: 500 }) : serve(url, options));
+
+  const result = await refreshSnapshot({ ...env, fetch });
+
+  assert.deepEqual(result.failed, ['me/alpha']);
+  assert.match(result.warnings.at(-1), /contents\/docs\/screenshots: HTTP 500/);
+});
+
+test('a local entry without a screenshots list reads docs/screenshots/ from disk', async (t) => {
+  const env = setup('projects:\n  - local: crm\n');
+  t.after(() => rmSync(env.dir, { recursive: true, force: true }));
+  const files = {
+    'README.md': readme('crm'),
+    'portfolio.yml': yml('crm', ''),
+    'docs/cover.png': 'cover',
+    'docs/screenshots/z.webp': 'z',
+    'docs/screenshots/m.gif': 'm',
+    'docs/screenshots/readme.md': 'not an image',
+  };
+  for (const [path, content] of Object.entries(files)) {
+    mkdirSync(dirname(join(env.localDir, 'crm', path)), { recursive: true });
+    writeFileSync(join(env.localDir, 'crm', path), content);
+  }
+
+  await refreshSnapshot({ ...env, fetch: fakeFetch({}).fetch });
+
+  assert.deepEqual(Object.keys(tree(join(env.snapshotDir, 'assets'))).sort(), [
+    'crm/docs/cover.png', 'crm/docs/screenshots/m.gif', 'crm/docs/screenshots/z.webp',
+  ]);
 });

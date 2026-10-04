@@ -4,11 +4,12 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { CORE_SCHEMA, load } from 'js-yaml';
 import { parsePortfolioYml } from './lib/portfolio-yml.mjs';
-import { parseReadme } from './lib/readme.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const REPO = /^[\w.-]+\/[\w.-]+$/;
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const SCREENSHOTS_DIR = 'docs/screenshots';
+const IMAGE_FILE = /\.(png|jpe?g|webp|gif)$/i;
 
 class NotFoundError extends Error {}
 
@@ -34,10 +35,8 @@ export async function refreshSnapshot({
   for (const entry of entries) {
     const before = previous.find((project) => project.id === entry.id);
     try {
-      const read = entry.repo
-        ? (path) => download(`https://raw.githubusercontent.com/${entry.repo}/HEAD/${encodePath(path)}`, { fetch, token })
-        : (path) => readLocal(join(localDir, entry.local, path));
-      const { project, files } = await loadProject(entry, read, result.warnings);
+      const source = entry.repo ? repoSource(entry.repo, { fetch, token }) : localSource(join(localDir, entry.local));
+      const { project, files } = await loadProject(entry, source, result.warnings);
       projects.push(project);
       downloads.set(project.slug, files);
       result.updated.push(entry.id);
@@ -76,23 +75,56 @@ function parseConfig(text) {
   return entries;
 }
 
-async function loadProject(entry, read, warnings) {
-  const readme = (await read('README.md')).toString('utf8');
-  const portfolio = (await read('portfolio.yml')).toString('utf8');
+// Where a project's files come from: its GitHub repo or content/local/<slug>/.
+function repoSource(repo, http) {
+  return {
+    read: (path) => download(`https://raw.githubusercontent.com/${repo}/HEAD/${encodePath(path)}`, http),
+    async list(dir) {
+      const body = await download(`https://api.github.com/repos/${repo}/contents/${encodePath(dir)}`, http);
+      return JSON.parse(body.toString('utf8')).filter((item) => item.type === 'file').map((item) => item.name);
+    },
+  };
+}
+
+function localSource(dir) {
+  return {
+    read: (path) => readLocal(join(dir, path)),
+    async list(sub) {
+      try {
+        return (await readdir(join(dir, sub), { withFileTypes: true })).filter((item) => item.isFile()).map((item) => item.name);
+      } catch (error) {
+        if (error.code === 'ENOENT') throw new NotFoundError(`${join(dir, sub)}: not found`);
+        throw error;
+      }
+    },
+  };
+}
+
+async function loadProject(entry, source, warnings) {
+  const readme = (await source.read('README.md')).toString('utf8');
+  const portfolio = (await source.read('portfolio.yml')).toString('utf8');
   const yml = parsePortfolioYml(portfolio, { source: entry.id });
   if (!yml.data) throw new Error(yml.errors.join('; '));
-  const parsed = parseReadme(readme, { source: entry.id });
 
-  // Images the site can show: the cover, the screenshots and the images inside the markers.
-  const paths = new Set([
-    yml.data.cover,
-    ...yml.data.screenshots.map((shot) => shot.src),
-    ...parsed.images.map((image) => image.path).filter(Boolean),
-  ]);
-  const files = new Map();
-  for (const path of paths) {
+  // The site shows the cover and the screenshots listed in portfolio.yml. Without a list, it
+  // falls back to every image in docs/screenshots/, in alphabetical order.
+  let screenshots = yml.data.screenshots.map((shot) => shot.path);
+  if (!screenshots.length) {
+    warnings.push(`[${entry.id}] no "screenshots" in portfolio.yml; using the images in ${SCREENSHOTS_DIR}/ (add the list)`);
     try {
-      files.set(path, await read(path));
+      screenshots = (await source.list(SCREENSHOTS_DIR))
+        .filter((name) => IMAGE_FILE.test(name))
+        .sort()
+        .map((name) => `${SCREENSHOTS_DIR}/${name}`);
+    } catch (error) {
+      if (!(error instanceof NotFoundError)) throw error;
+    }
+  }
+
+  const files = new Map();
+  for (const path of new Set([yml.data.cover, ...screenshots])) {
+    try {
+      files.set(path, await source.read(path));
     } catch (error) {
       // A missing image is skipped; any other failure (network, rate limit) fails the project.
       if (!(error instanceof NotFoundError)) throw error;
