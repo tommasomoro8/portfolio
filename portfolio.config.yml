@@ -4,7 +4,9 @@
 #     extra_repos: [owner/other]       # optional, linked from the project, not parsed
 #   - local: slug                      # content in content/local/<slug>/ (same files as a repo)
 projects:
+  - repo: tommasomoro8/overseas-student-management
   - repo: tommasomoro8/tsc-scheda-orari
+  - repo: tommasomoro8/impression-cafe
   - repo: tommasomoro8/spotify-stats
   - repo: tommasomoro8/cappella-degli-scrovegni
   - repo: tommasomoro8/chess
