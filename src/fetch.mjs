@@ -8,6 +8,7 @@ import { parsePortfolioYml } from './lib/portfolio-yml.mjs';
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const REPO = /^[\w.-]+\/[\w.-]+$/;
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const COMMIT = /^[0-9a-f]{40}$/;
 const SCREENSHOTS_DIR = 'docs/screenshots';
 const IMAGE_FILE = /\.(png|jpe?g|webp|gif)$/i;
 
@@ -77,8 +78,13 @@ function parseConfig(text) {
 
 // Where a project's files come from: its GitHub repo or content/local/<slug>/.
 function repoSource(repo, http) {
+  // raw.githubusercontent.com serves a branch from a five-minute cache, but a commit is always
+  // current. When the last commit cannot be resolved (rate limit), the files are read from HEAD.
+  let ref;
+  const latestCommit = () => (ref ??= download(`https://api.github.com/repos/${repo}/commits/HEAD`, http, { accept: 'application/vnd.github.sha' })
+    .then((body) => (COMMIT.test(body.toString('utf8').trim()) ? body.toString('utf8').trim() : 'HEAD'), () => 'HEAD'));
   return {
-    read: (path) => download(`https://raw.githubusercontent.com/${repo}/HEAD/${encodePath(path)}`, http),
+    read: async (path) => download(`https://raw.githubusercontent.com/${repo}/${await latestCommit()}/${encodePath(path)}`, http),
     async list(dir) {
       const body = await download(`https://api.github.com/repos/${repo}/contents/${encodePath(dir)}`, http);
       return JSON.parse(body.toString('utf8')).filter((item) => item.type === 'file').map((item) => item.name);
@@ -143,14 +149,14 @@ async function loadProject(entry, source, warnings) {
   return { project, files };
 }
 
-async function download(url, { fetch, token }) {
+async function download(url, { fetch, token }, headers = {}) {
   let response = await fetch(url, {
-    headers: token ? { authorization: `Bearer ${token}` } : {},
+    headers: token ? { ...headers, authorization: `Bearer ${token}` } : headers,
     signal: AbortSignal.timeout(30_000),
   });
   // A token without access to another repository can be refused; public files work without it.
   if (token && [401, 403, 404].includes(response.status)) {
-    response = await fetch(url, { signal: AbortSignal.timeout(30_000) });
+    response = await fetch(url, { headers, signal: AbortSignal.timeout(30_000) });
   }
   if (response.status === 404) throw new NotFoundError(`${url}: not found`);
   if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);

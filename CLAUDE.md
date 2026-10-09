@@ -1,7 +1,8 @@
 # Portfolio — project brief
 
 This repository builds and deploys my personal portfolio site: a minimal, static, English-language
-timeline of my projects, followed by press & recognition, education, experience, and a contact section.
+timeline of my projects, followed by press & recognition, education, experience, other experience,
+and a contact section.
 
 Read this whole file before doing anything. It is the source of truth for scope, rules and design.
 If something here is unclear or missing, ask me instead of guessing.
@@ -56,7 +57,9 @@ Two separate commands:
 
 - `npm run fetch` — online. For every project in `portfolio.config.yml`, download `README.md`
   and `portfolio.yml` from its GitHub repo (plus the cover and the screenshots) from
-  `raw.githubusercontent.com`, and update that project's entry in `data/snapshot/`. Only when a
+  `raw.githubusercontent.com`, and update that project's entry in `data/snapshot/`. The files are
+  read at the repo's last commit (one GitHub API request per repo), because a branch is served
+  from a five-minute cache; if the commit cannot be resolved, they are read from `HEAD`. Only when a
   project has no `screenshots` list is `docs/screenshots/` listed through the GitHub contents API.
 - `npm run build` — offline. Reads **only** `data/snapshot/` and `content/`, writes `dist/`.
 
@@ -105,7 +108,7 @@ Every project repo contains `README.md` and `portfolio.yml`. The site reads them
 One or two sentences.
 ## The solution
 ## Input → Output            (optional: two code blocks, input then output)
-## Technical challenges
+## Challenges
 ## What I learned
 ## Stack                     (a comma-separated line or a list)
 ## Recognition               (optional)
@@ -133,7 +136,8 @@ Parsing rules:
 - The text on the site comes from the hidden `<!-- portfolio:summary ... -->` block, extracted with
   `<!--\s*portfolio:summary\s*\n([\s\S]*?)\n\s*-->` after normalizing `\r\n`. Its content is
   Markdown, split by H2; match headings case-insensitively, trimmed, a leading "The " ignored
-  (`## The problem` = `## Problem`). Unknown H2s: warn, ignore.
+  (`## The problem` = `## Problem`); the old `## Technical challenges` is read as `## Challenges`
+  and shown as "Challenges". Unknown H2s: warn, ignore.
 - Sections are always shown in the order above, whatever their order in the README. Missing
   optional sections are fine; missing required ones: warn, render the project anyway, never an
   empty heading. Paragraphs, lists, bold, italic and links are rendered.
@@ -150,7 +154,7 @@ category: ""             # uni | school | pers | comm (also university | persona
 year: 2024               # used for timeline ordering
 period: ""               # free text, shown as written, e.g. "Mar 2024 – Jun 2024"
 status: ""               # completed | in progress | archived (old: completato | in corso | archiviato)
-role: ""                 # free text, shown as written, e.g. "solo", "team of 4, backend"
+role: ""                 # free text, shown with a capital first letter, e.g. "solo", "team of 4, backend"
 course: ""               # optional, university projects
 cover: docs/screenshots/cover.png   # image at the top of the project detail, not repeated in the
                                     # gallery; alt text from `screenshots`, else the README image
@@ -207,19 +211,18 @@ Node 20+, ES modules, `node:test` for tests. Scripts: `fetch`, `build`, `dev` (b
 
 Single page, in this order:
 
-1. **Header** — name, short bio, email, GitHub, LinkedIn; small anchor nav:
-   Projects · Press & recognition · Education · Experience · Contact.
+1. **Header** — name, short bio and the contacts: email, GitHub, LinkedIn, "15-min call" (the
+   ones that open another site end with a ↗). No section nav.
 2. **Category filter** — "All" plus one pill per category, with project counts; one category at a
-   time (clicking it again goes back to All); a hint line explains that each graph column is a category.
+   time (clicking it again goes back to All). Clicking a pill closes every open project.
 3. **Projects timeline** — newest first (by `year`, then config order).
 4. **Press & recognition** — every `press` item of every project, newest first; undated items
    sorted by their project's year and shown as "<year> · date unknown". Each item links to the
    source and names the project.
 5. **Education**
-6. **Experience** (jobs outside programming, plus the internship)
-7. **Contact CTA**
-8. **Footer** — one line: each project has a README on GitHub with the same content plus the
-   technical details.
+6. **Experience** — IT work only (for now the internship).
+7. **Other experience** — jobs outside programming.
+8. **Contact CTA** — the page ends here, with no footer.
 
 ### Project card (collapsed)
 Category label (in the category colour) + status, title, pitch, badges (award, press mentions),
@@ -230,14 +233,17 @@ Category label (in the category colour) + status, title, pitch, badges (award, p
    `note` if set.
 2. The text from the summary, in the fixed order (Input → Output as two code blocks with an arrow,
    stacked on mobile; Stack as chips).
-3. "Screenshots": the gallery from `screenshots`, without the cover.
-4. "Press & recognition" for the project, if any.
+3. "Press & recognition": the project's `press` items; a project without any shows the README's
+   Recognition text here instead (with press items that text is left out, so nothing is repeated).
+4. "Screenshots": the gallery from `screenshots`, without the cover.
 5. "Read more on GitHub" (the README, with the full version) or "Code not public", plus links to
    `extra_repos`.
 
 **Progressive enhancement:** all project content is rendered into the HTML at build time.
 Use `<details>`/`<summary>` so expanding works without JavaScript. `main.js` only adds the
-category filters (hide the filter UI when JS is off) and recomputes visible year labels.
+category filters (hide the filter UI when JS is off), recomputes visible year labels and line
+colours, runs the timeline scroll animation, and opens the cover and the screenshots of a project
+in a full-screen carousel (arrows, arrow keys, swipe, Esc; without JS they are links to the image).
 
 ---
 
@@ -245,7 +251,7 @@ category filters (hide the filter UI when JS is off) and recomputes visible year
 
 Minimal, black and white. **The only colours on the page are the four category colours.**
 The page follows the style of the HTML draft provided in October 2026 (light only, 920px column,
-pill filters, rounded badges, commit-graph lanes with hollow nodes, bordered project detail).
+pill filters, rounded badges, a single timeline line with hollow nodes, bordered project detail).
 
 ### Tokens
 ```
@@ -264,17 +270,29 @@ Schibsted Grotesk (400–800) for everything, JetBrains Mono only for stack chip
 Input → Output blocks. **Self-host the fonts** (woff2 in `public/fonts/`) — no requests to
 Google or any third party. System font fallbacks.
 
-### The signature element: commit-graph timeline
-Each category is a thin vertical lane (like a git graph). Each project is a node on its
-category's lane; that lane is drawn at full opacity in the project's row, the others faint.
-Year label in a narrow left column, shown once per year. On mobile the lanes narrow but stay.
+### The signature element: the timeline line
+One thin vertical line runs through every project, with a hollow node per project in its
+category colour. Between two nodes the line blends from one category colour to the next: it
+keeps the project's colour for at least the first half and fades into the next one over the last
+stretch before the next node. After the last project the line runs on to the end of the
+project's card, open or closed, and fades out there.
+Year label in a narrow left column, shown once per year. On mobile the line stays, next to the year.
+Scroll animation (JavaScript only, off with `prefers-reduced-motion`): the line is drawn down to
+just below the middle of the window as the page scrolls, the rest stays faint, and each node
+lights up with a ring spreading out once when the line reaches it. Without it the line is fully drawn.
 Category colour also appears as the left border of an expanded project and on its label,
-"Open project" link and tags. Everything else is black, white and greys: no shadows, no gradients.
+"Open project" link and tags. Everything else is black, white and greys: no shadows, and no
+gradients other than the blend on the line.
 
 ### Quality bar
 - Responsive from 320px; no horizontal page scroll (wide blocks scroll inside themselves).
 - Accessible: semantic landmarks, visible focus, `aria-pressed` on filters, alt text on every
   screenshot, AA contrast (category colours used as text take the darker text shades).
+- Every link that leaves the page opens in a new tab (`target="_blank" rel="noopener"`),
+  screenshots included (with JavaScript they open in the carousel instead); in-page anchors and
+  `mailto:` links do not.
+- Print: the page prints as a CV. The header links other than the email, the category filter,
+  "Open project" and the contact CTA are hidden; nothing is added.
 - No cookies, no analytics, no third-party requests at all.
 - `<title>`, meta description, Open Graph tags + an OG image, emoji or simple favicon.
 - Lighthouse ≥ 95 in every category.
@@ -292,14 +310,15 @@ in 3D in high school; now I write software that solves concrete problems. Here a
 in chronological order, with what each one taught me."
 
 ### Section intros
-- Press & recognition: "Articles, competitions and events where my projects appeared, newest first."
-- Experience: "Jobs outside programming that taught me to work with customers and in a team."
+- Press & recognition: "Articles, competitions and events where my projects appeared."
+- Other experience: "Jobs outside programming that taught me to work with customers and in a team."
 
 ### Contact CTA
 - Heading, on two lines: "Curious about my work?" / "Let's get in touch!"
 - Line: "Whether it's a project, an internship, or just a chat about something you saw here,
   I'd be glad to hear from you."
-- Buttons: "Email me" (`mailto:` with subject "Hi Tommaso") · "Connect on LinkedIn"
+- Buttons: "Email me" (`mailto:` with subject "Hi Tommaso") · "Connect on LinkedIn" ·
+  "Book a 15-min call" (the `call` link in `content/profile.yml`)
 
 ### content/profile.yml — initial data
 ```yaml
@@ -307,37 +326,44 @@ name: Tommaso Moro
 email: moroxtommaso@gmail.com
 github: TODO
 linkedin: TODO
+call: https://calendar.app.google/MEdkNxquHeon1kcMA
 
 education:
-  - title: BSc in Computer Science (L-31)
+  - title: Bachelor's degree in Computer Science
     org: Ca' Foscari University of Venice
+    url: https://www.unive.it/
     period: Oct 2024 – present
-    text: "Track: Information Technologies and Sciences."
+    text: "Turning years of self-taught programming into solid foundations."
   - title: Five-month exchange program
     org: A.R. MacNeill Secondary School, Vancouver, Canada
+    url: https://macneill.sd38.bc.ca/
     period: Aug 2022 – Jan 2023
-    text: "A semester of high school in Canada: independence, adaptability, and English every day."
-  - title: High school diploma, Applied Sciences
+    text: "Five months of adapting to a new life and speaking English every day, in a city I fell in love with."
+  - title: High school diploma
     org: Liceo Statale Duca degli Abruzzi, Treviso
-    period: 2019 – 2024
-    text: "Where my digital reconstruction projects started: Treviso Cathedral, the Scrovegni Chapel, Café Guerbois."
+    url: https://liceoduca.edu.it/
+    period: Sep 2019 – Jun 2024
+    text: "An Applied Sciences curriculum with computer science classes, turning an early fascination with computers into a love for building software."
   - title: Languages
-    text: "Italian (native), English (B2)."
+    text: "Native Italian, English B2."
 
 experience:
-  - title: Sales associate, mobile department
-    org: MediaWorld, Olmi (Treviso)
-    period: Jun 2025 – Apr 2026
-    text: "Advising customers on smartphones and accessories, activating contracts and services, merchandising and restocking, after-sales support."
-  - title: Multiplex operator
-    org: The Space Cinema, Silea (Treviso)
-    period: Mar 2024 – Jan 2025
-    text: "Welcoming guests, ticket and concession sales, access control, handling issues in the theatres."
-    related_project: thespacecinema-schedule   # render a small tag linking to the project
-  - title: IT internship (two weeks)
+  - title: IT internship
     org: Targa Telematics, Treviso
-    period: Jan 2024
-    text: "Hands-on work in a tech company and a first look at the ethical questions of applied AI."
+    url: https://targatelematics.com/
+    period: Jan 2024 · two weeks
+    text: "Two highly formative weeks that taught me the importance of critical thinking and improved how I analyze and solve complex problems."
+
+other_experience:
+  - title: Sales associate
+    org: MediaWorld, Treviso
+    period: Jun 2025 – Apr 2026
+    text: "Selling smartphones and related services, where I learned to turn technical specs into clear advice and to find out what each customer really needed."
+  - title: Multiplex operator
+    org: The Space Cinema, Treviso
+    period: Mar 2024 – Jan 2025
+    text: "Balancing shifts at the cinema with full-time studies taught me to manage my time with discipline and to stay reliable under pressure."
+    related_project: thespacecinema-schedule   # render a small tag linking to the project
 ```
 
 ---

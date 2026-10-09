@@ -5,6 +5,7 @@
 #   - local: slug                      # content in content/local/<slug>/ (same files as a repo)
 projects:
   - repo: tommasomoro8/overseas-student-management
+  - local: agenti-treviso-crm
   - repo: tommasomoro8/tsc-scheda-orari
   - repo: tommasomoro8/impression-cafe
   - repo: tommasomoro8/spotify-stats

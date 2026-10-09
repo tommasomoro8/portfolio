@@ -40,7 +40,9 @@ portfolio.config.yml ──► fetch ──► data/snapshot/ (committed) ──
 ```
 
 - `npm run fetch` reads the files from `raw.githubusercontent.com` (using `GITHUB_TOKEN` when it
-  is set) and stores them, with the cover and the screenshots, in `data/snapshot/`. If a project
+  is set) and stores them, with the cover and the screenshots, in `data/snapshot/`. It asks the
+  GitHub API for each repo's last commit and reads the files at that commit, so a push is visible
+  right away; without the API (rate limit) it reads the branch, which can lag by five minutes. If a project
   can't be fetched (network, rate limit, invalid `portfolio.yml`), its previous snapshot is kept.
   A project leaves the snapshot only when it is removed from `portfolio.config.yml`.
 - `npm run build` never goes online, so the site can always be rebuilt from the last good
@@ -105,7 +107,7 @@ portfolio.config.yml ──► fetch ──► data/snapshot/ (committed) ──
    ## The solution
    Two or three sentences.
 
-   ## Technical challenges
+   ## Challenges
    - One point per line.
 
    ## What I learned
@@ -117,7 +119,8 @@ portfolio.config.yml ──► fetch ──► data/snapshot/ (committed) ──
    ```
 
    Sections are shown in this order (plus the optional `## Input → Output`, two code blocks, and
-   `## Recognition`). Headings match without regard to case or a leading "The". Images in the
+   `## Recognition`). Headings match without regard to case or a leading "The"
+   (the old `## Technical challenges` still works and is shown as "Challenges"). Images in the
    text are not shown: list them under `screenshots`. A README without the summary still works:
    the long text between `<!-- portfolio:start -->` and `<!-- portfolio:end -->` is used, and a
    warning asks for a summary.

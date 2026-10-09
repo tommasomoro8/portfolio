@@ -1,0 +1,18 @@
+title: "Sales Agents Association CRM"
+slug: "agenti-treviso-crm"          # lowercase, hyphens; used in the portfolio URL, never change it once published
+category: "comm"                    # uni | school | pers | comm
+year: 2025
+period: "Mar 2025 – present"
+status: "in progress"               # completed | in progress | archived
+role: "solo"
+cover: docs/screenshots/cover.png
+demo: ""
+note: "This is a private client project, so the code is not public. The first version is finished and delivered, and I'm working on a second one."
+press: []
+screenshots:                        # gallery shown under the text on the portfolio, in this order
+  - path: docs/screenshots/cover.png
+    alt: "Member page with last contact, payment status, personal details and the event timeline"
+  - path: docs/screenshots/list.png
+    alt: "Member list sorted by last contact, with a payment status badge on each row"
+  - path: docs/screenshots/events.png
+    alt: "Event list dialog showing the details of a phone contact next to the member's timeline"

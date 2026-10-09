@@ -2,6 +2,7 @@ name: Tommaso Moro
 email: moroxtommaso@gmail.com
 github: https://github.com/tommasomoro8
 linkedin: https://www.linkedin.com/in/tommasomoro/
+call: https://calendar.app.google/MEdkNxquHeon1kcMA   # booking page for a 15-minute call
 url: https://tommasomoro8.github.io/   # address of the published site, used for share previews
 
 bio: >-
@@ -14,36 +15,43 @@ cta:
   text: "Whether it's a project, an internship, or just a chat about something you saw here, I'd be glad to hear from you."
 
 intros:                        # optional line under a section heading
-  press: "Articles, competitions and events where my projects appeared, newest first."
-  experience: "Jobs outside programming that taught me to work with customers and in a team."
+  press: "Articles, competitions and events where my projects appeared."
+  other_experience: "Jobs outside programming that taught me to work with customers and in a team."
 
+# In education and experience, `url` is optional: it turns `org` into a link that opens in a new tab.
 education:
-  - title: BSc in Computer Science (L-31)
+  - title: Bachelor's degree in Computer Science
     org: Ca' Foscari University of Venice
+    url: https://www.unive.it/
     period: Oct 2024 – present
-    text: "Track: Information Technologies and Sciences."
+    text: "Turning years of self-taught programming into solid foundations."
   - title: Five-month exchange program
     org: A.R. MacNeill Secondary School, Vancouver, Canada
+    url: https://macneill.sd38.bc.ca/
     period: Aug 2022 – Jan 2023
-    text: "A semester of high school in Canada: independence, adaptability, and English every day."
-  - title: High school diploma, Applied Sciences
+    text: "Five months of adapting to a new life and speaking English every day, in a city I fell in love with."
+  - title: High school diploma
     org: Liceo Statale Duca degli Abruzzi, Treviso
-    period: 2019 – 2024
-    text: "Where my digital reconstruction projects started: Treviso Cathedral, the Scrovegni Chapel, Café Guerbois."
+    url: https://liceoduca.edu.it/
+    period: Sep 2019 – Jun 2024
+    text: "An Applied Sciences curriculum with computer science classes, turning an early fascination with computers into a love for building software."
   - title: Languages
-    text: "Italian (native), English (B2)."
+    text: "Native Italian, English B2."
 
 experience:
-  - title: Sales associate, mobile department
-    org: MediaWorld, Olmi (Treviso)
-    period: Jun 2025 – Apr 2026
-    text: "Advising customers on smartphones and accessories, activating contracts and services, merchandising and restocking, after-sales support."
-  - title: Multiplex operator
-    org: The Space Cinema, Silea (Treviso)
-    period: Mar 2024 – Jan 2025
-    text: "Welcoming guests, ticket and concession sales, access control, handling issues in the theatres."
-    related_project: thespacecinema-schedule   # render a small tag linking to the project
-  - title: IT internship (two weeks)
+  - title: IT internship
     org: Targa Telematics, Treviso
-    period: Jan 2024
-    text: "Hands-on work in a tech company and a first look at the ethical questions of applied AI."
+    url: https://targatelematics.com/
+    period: Jan 2024 · two weeks
+    text: "Two highly formative weeks that taught me the importance of critical thinking and improved how I analyze and solve complex problems."
+
+other_experience:
+  - title: Sales associate
+    org: MediaWorld, Treviso
+    period: Jun 2025 – Apr 2026
+    text: "Selling smartphones and related services, where I learned to turn technical specs into clear advice and to find out what each customer really needed."
+  - title: Multiplex operator
+    org: The Space Cinema, Treviso
+    period: Mar 2024 – Jan 2025
+    text: "Balancing shifts at the cinema with full-time studies taught me to manage my time with discipline and to stay reliable under pressure."
+    related_project: thespacecinema-schedule   # render a small tag linking to the project

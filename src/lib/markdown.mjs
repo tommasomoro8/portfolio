@@ -1,6 +1,14 @@
-import { Lexer, Marked } from 'marked';
+import { Lexer, Marked, Renderer } from 'marked';
 
-const sectionMarked = new Marked();
+// Links to other sites open in a new tab, like every other external link on the page.
+const sectionMarked = new Marked({
+  renderer: {
+    link(token) {
+      const html = Renderer.prototype.link.call(this, token);
+      return /^https?:\/\//i.test(token.href) ? html.replace(/^<a href="[^"]*"/, '$& target="_blank" rel="noopener"') : html;
+    },
+  },
+});
 
 // Used inside <summary>, where links would be nested interactive content.
 const inlineMarked = new Marked({

@@ -1,19 +1,15 @@
 import { escapeHtml as e } from '../lib/html.mjs';
 import { CATEGORIES, CATEGORY_LABELS, formatDate, kindLabel, renderPressTitle, renderProject } from './project.mjs';
 
+// Marks a header contact, a school or a company that opens another site.
+const EXTERNAL = '<span class="ext" aria-hidden="true">↗</span>';
+
 /** The whole single page. */
 export function renderPage({ profile, projects, press }) {
   const hasPress = press.length > 0;
-  const nav = [
-    ['projects', 'Projects'],
-    hasPress && ['press', 'Press & recognition'],
-    ['education', 'Education'],
-    ['experience', 'Experience'],
-    ['contact', 'Contact'],
-  ].filter(Boolean);
   const intros = profile.intros ?? {};
   const url = profile.url ?? '';
-  const title = `${profile.name} — Projects`;
+  const title = `${profile.name} — Portfolio`;
 
   return `<!doctype html>
 <html lang="en">
@@ -47,12 +43,10 @@ ${url ? `<meta property="og:url" content="${e(url)}">
     <p class="bio">${e(profile.bio)}</p>
     <div class="contacts">
       <a href="mailto:${e(profile.email)}">${e(profile.email)}</a>
-      ${profile.github ? `<a href="${e(profile.github)}" rel="noopener">GitHub</a>` : ''}
-      ${profile.linkedin ? `<a href="${e(profile.linkedin)}" rel="noopener">LinkedIn</a>` : ''}
+      ${profile.github ? `<a href="${e(profile.github)}" target="_blank" rel="noopener">GitHub${EXTERNAL}</a>` : ''}
+      ${profile.linkedin ? `<a href="${e(profile.linkedin)}" target="_blank" rel="noopener">LinkedIn${EXTERNAL}</a>` : ''}
+      ${profile.call ? `<a href="${e(profile.call)}" target="_blank" rel="noopener">15-min call${EXTERNAL}</a>` : ''}
     </div>
-    <nav class="nav" aria-label="Sections">
-      ${nav.map(([id, label]) => `<a href="#${id}">${e(label)}</a>`).join('\n      ')}
-    </nav>
   </header>
 
   <main id="main">
@@ -60,10 +54,9 @@ ${renderProjects(projects)}
 ${hasPress ? renderPress(press, intros.press) : ''}
 ${renderEntries('education', 'Education', profile.education ?? [], projects, intros.education)}
 ${renderEntries('experience', 'Experience', profile.experience ?? [], projects, intros.experience)}
+${profile.other_experience?.length ? renderEntries('other-experience', 'Other experience', profile.other_experience, projects, intros.other_experience) : ''}
 ${renderContact(profile)}
   </main>
-
-  <footer class="site-footer">Each project has a README on GitHub with the same content as this page, plus the technical details: architecture, how to run it, decisions and limits.</footer>
 </div>
 </body>
 </html>
@@ -78,10 +71,10 @@ function renderProjects(projects) {
   }
   const count = (category) => projects.filter((project) => project.category === category).length;
   let previousYear = null;
-  const rows = projects.map((project) => {
+  const rows = projects.map((project, index) => {
     const showYear = project.year !== previousYear;
     previousYear = project.year;
-    return renderProject(project, { showYear });
+    return renderProject(project, { showYear, next: projects[index + 1]?.category });
   });
   // The filter needs JavaScript: the CSS shows it only when <html> has the "js" class, set by an
   // inline script before the first paint, so the page does not shift when main.js runs.
@@ -90,7 +83,6 @@ function renderProjects(projects) {
     <button type="button" class="lane-btn all" data-category="all" aria-pressed="true">All (${projects.length})</button>
     ${CATEGORIES.map((category) => `<button type="button" class="lane-btn" data-category="${category}" aria-pressed="false"${count(category) ? '' : ' disabled'}><span class="sw"></span>${CATEGORY_LABELS[category]} (${count(category)})</button>`).join('\n    ')}
   </div>
-  <p class="lanes-hint">Each column in the graph is a category. Pick one to see only its projects.</p>
   <ol class="timeline" aria-label="Projects">${rows.join('')}
   </ol>
 </section>`;
@@ -123,7 +115,7 @@ function renderEntries(id, heading, entries, projects, intro) {
       <span class="d">${e(entry.period || entry.title)}</span>
       <div>
         <h3>${e(entry.period ? entry.title : entry.text.replace(/\.$/, ''))}</h3>
-        ${entry.org ? `<span class="where">${e(entry.org)}</span>` : ''}
+        ${entry.org ? `<span class="where">${entry.url ? `<a href="${e(entry.url)}" target="_blank" rel="noopener">${e(entry.org)}${EXTERNAL}</a>` : e(entry.org)}</span>` : ''}
         ${entry.period && entry.text ? `<p>${e(entry.text)}</p>` : ''}
         ${related ? `<a class="tag" href="#project-${e(related.slug)}">Related project: ${e(related.title)}</a>` : ''}
       </div>
@@ -141,6 +133,7 @@ function renderContact(profile) {
   <div class="row-btn">
     <a class="btn primary" href="mailto:${e(profile.email)}?subject=${encodeURIComponent('Hi Tommaso')}">Email me</a>
     ${profile.linkedin ? `<a class="btn" href="${e(profile.linkedin)}" target="_blank" rel="noopener">Connect on LinkedIn</a>` : ''}
+    ${profile.call ? `<a class="btn" href="${e(profile.call)}" target="_blank" rel="noopener">Book a 15-min call</a>` : ''}
   </div>
 </section>`;
 }

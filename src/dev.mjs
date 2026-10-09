@@ -1,9 +1,9 @@
 // Build the site, serve dist/ on http://localhost:8080 and rebuild when a source file changes.
+import { spawn } from 'node:child_process';
 import { createReadStream, existsSync, statSync, watch } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { build } from './build.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const DIST = join(ROOT, 'dist');
@@ -22,14 +22,11 @@ const TYPES = {
   '.txt': 'text/plain; charset=utf-8',
 };
 
-async function rebuild() {
-  try {
-    const { warnings, projects } = await build();
-    for (const warning of warnings) console.warn(`warning: ${warning}`);
-    console.log(`Built ${projects.length} project${projects.length === 1 ? '' : 's'} at ${new Date().toLocaleTimeString()}`);
-  } catch (error) {
-    console.error(`Build failed: ${error.message}`);
-  }
+// Each build runs in a new process, so changes to the build code and the templates are picked up too.
+function rebuild() {
+  return new Promise((resolve) => {
+    spawn(process.execPath, [join(ROOT, 'src/build.mjs')], { stdio: 'inherit' }).on('close', resolve);
+  });
 }
 
 await rebuild();

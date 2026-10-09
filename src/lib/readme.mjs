@@ -1,12 +1,13 @@
 import { Lexer, marked } from 'marked';
 import { isExternalUrl, resolveRepoPath } from './repo-path.mjs';
 
-/** Sections shown on the site, in display order (a leading "The " in the README heading is ignored). */
+/** Sections shown on the site, in display order (a leading "The " in the README heading is ignored).
+ * `aliases` are older headings that READMEs may still use. */
 export const SECTIONS = [
   { key: 'problem', heading: 'Problem', required: true },
   { key: 'solution', heading: 'Solution', required: true },
   { key: 'inputOutput', heading: 'Input → Output', required: false },
-  { key: 'technicalChallenges', heading: 'Technical challenges', required: true },
+  { key: 'challenges', heading: 'Challenges', aliases: ['Technical challenges'], required: true },
   { key: 'whatILearned', heading: 'What I learned', required: true },
   { key: 'stack', heading: 'Stack', required: true },
   { key: 'recognition', heading: 'Recognition', required: false },
@@ -185,7 +186,7 @@ function splitSections(tokens, where, warn) {
   for (const token of tokens) {
     if (token.type === 'heading' && token.depth === 2) {
       const heading = plainText(token.tokens).trim();
-      const known = SECTIONS.find((section) => headingKey(section.heading) === headingKey(heading));
+      const known = SECTIONS.find((section) => [section.heading, ...(section.aliases ?? [])].some((name) => headingKey(name) === headingKey(heading)));
       if (!known) {
         warn(`unknown section "## ${heading}" in ${where} is ignored`);
       } else if (seen.has(known.key)) {

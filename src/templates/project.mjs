@@ -13,18 +13,18 @@ const TEXT_SECTIONS = [
   ['problem', 'Problem'],
   ['solution', 'Solution'],
   ['inputOutput', 'Input → Output'],
-  ['technicalChallenges', 'Technical challenges'],
+  ['challenges', 'Challenges'],
   ['whatILearned', 'What I learned'],
   ['stack', 'Stack'],
-  ['recognition', 'Recognition'],
 ];
 
-/** One row of the projects timeline: year, commit-graph lanes and the project card. */
-export function renderProject(project, { showYear }) {
+/** One row of the projects timeline: year, node and line, and the project card. `next` is the
+ * category of the project below, which the line blends into. */
+export function renderProject(project, { showYear, next }) {
   return `
-<li class="row" id="project-${e(project.slug)}" data-category="${project.category}" data-year="${project.year}">
+<li class="row" id="project-${e(project.slug)}" data-category="${project.category}" data-year="${project.year}"${next ? ` data-next="${next}"` : ''}>
   <div class="year">${showYear ? project.year : ''}</div>
-  <div class="graph" aria-hidden="true">${CATEGORIES.map((category) => `<i data-category="${category}"${category === project.category ? ' class="on"' : ''}></i>`).join('')}<span class="node"></span></div>
+  <div class="graph" aria-hidden="true"><i class="line"></i><span class="node"></span></div>
   <details class="card">
     <summary class="card-head">
       <span class="meta"><b>${CATEGORY_LABELS[project.category]}</b>, ${e(capitalize(project.status))}</span>
@@ -36,8 +36,8 @@ export function renderProject(project, { showYear }) {
     <div class="detail">
       ${renderHead(project)}
       ${TEXT_SECTIONS.map(([key, heading]) => renderSection(project, key, heading)).join('')}
-      ${renderScreenshots(project)}
       ${renderPress(project)}
+      ${renderScreenshots(project)}
       ${renderLinks(project)}
     </div>
   </details>
@@ -78,12 +78,12 @@ function renderBadges(project) {
 function renderHead(project) {
   const facts = [
     ['Period', project.period],
-    ['Role', project.role],
+    ['Role', capitalize(project.role)],
     ['Status', capitalize(project.status)],
     ['Course', project.course],
   ].filter(([, value]) => value);
   return `
-      ${project.cover ? `<img class="cover" src="${e(project.cover.url)}" alt="${e(project.cover.alt)}" loading="lazy">` : ''}
+      ${project.cover ? `<a class="cover-link" href="${e(project.cover.url)}" target="_blank" rel="noopener"><img class="cover" src="${e(project.cover.url)}" alt="${e(project.cover.alt)}" loading="lazy"></a>` : ''}
       <dl class="facts">${facts.map(([label, value]) => `<div><dt>${label}</dt><dd>${e(value)}</dd></div>`).join('')}</dl>
       ${project.demo ? `<div class="links"><a class="btn" href="${e(project.demo)}" target="_blank" rel="noopener">Live demo</a></div>` : ''}
       ${project.note ? `<p class="note">${e(project.note)}</p>` : ''}`;
@@ -114,12 +114,16 @@ function renderScreenshots(project) {
   if (!project.screenshots.length) return '';
   return `<h3>Screenshots</h3>
       <div class="shots">${project.screenshots.map((shot) => `
-        <a class="shot" href="${e(shot.url)}"><img src="${e(shot.url)}" alt="${e(shot.alt)}" loading="lazy"></a>`).join('')}
+        <a class="shot" href="${e(shot.url)}" target="_blank" rel="noopener"><img src="${e(shot.url)}" alt="${e(shot.alt)}" loading="lazy"></a>`).join('')}
       </div>`;
 }
 
+// The press items of portfolio.yml. A project without any shows the Recognition text of its README
+// under the same heading; with press items that text would repeat them, so it is left out.
 function renderPress(project) {
-  if (!project.press.length) return '';
+  if (!project.press.length) {
+    return project.sections.recognition ? `<h3>Press &amp; recognition</h3>${project.sections.recognition}` : '';
+  }
   return `<h3>Press &amp; recognition</h3>
       <ul class="press">${project.press.map((item) => `
         <li>${renderPressTitle(item)}<small>${[kindLabel(item.kind), e(item.source), item.date ? formatDate(item.date) : ''].filter(Boolean).join(', ')}</small></li>`).join('')}

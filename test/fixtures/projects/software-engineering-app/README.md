@@ -11,7 +11,7 @@ TODO: one or two sentences.
 ## The solution
 TODO: two or three sentences.
 
-## Technical challenges
+## Challenges
 - TODO
 
 ## What I learned

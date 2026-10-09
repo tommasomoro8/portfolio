@@ -33,7 +33,7 @@ Short problem.
 ## The solution
 Short solution with **bold**, *italic* and a [link](https://example.com).
 
-## Technical challenges
+## Challenges
 - One challenge.
 - Another one.
 
@@ -49,10 +49,10 @@ test('the text comes from the portfolio:summary block, not from the long version
   assert.equal(result.textSource, 'summary');
   assert.equal(result.title, 'Chess');
   assert.equal(result.pitch, 'A chess game for the browser.');
-  assert.deepEqual(Object.keys(result.sections), ['problem', 'solution', 'technicalChallenges', 'whatILearned', 'stack']);
+  assert.deepEqual(Object.keys(result.sections), ['problem', 'solution', 'challenges', 'whatILearned', 'stack']);
   assert.equal(result.sections.problem.heading, 'Problem');
   assert.equal(result.sections.problem.markdown, 'Short problem.');
-  assert.equal(result.sections.technicalChallenges.markdown, '- One challenge.\n- Another one.');
+  assert.equal(result.sections.challenges.markdown, '- One challenge.\n- Another one.');
   assert.deepEqual(result.sections.stack.items, ['HTML', 'CSS', 'JavaScript (no libraries)', 'Google Fonts']);
   assert.doesNotMatch(JSON.stringify(result.sections), /Long problem text|GitHub only/);
   assert.deepEqual(result.warnings, []);
@@ -67,11 +67,11 @@ test('summary headings match case-insensitively, in any order; unknown ones are 
     '## the solution', 'Solution.', '',
     '## Recognition', 'A prize.', '',
     '## The Problem', 'Problem.', '',
-    '## Technical challenges', 'Hard parts.',
+    '## Challenges', 'Hard parts.',
   ].join('\n')));
 
   assert.equal(result.textSource, 'summary');
-  assert.deepEqual(Object.keys(result.sections).sort(), ['problem', 'recognition', 'solution', 'stack', 'technicalChallenges', 'whatILearned']);
+  assert.deepEqual(Object.keys(result.sections).sort(), ['challenges', 'problem', 'recognition', 'solution', 'stack', 'whatILearned']);
   assert.deepEqual(result.sections.stack.items, ['Node.js', 'SQLite']);
   assert.deepEqual(result.warnings, [
     '[test] README.md: content before the first "##" heading in the portfolio summary is ignored',
@@ -79,12 +79,19 @@ test('summary headings match case-insensitively, in any order; unknown ones are 
   ]);
 });
 
+test('the old "## Technical challenges" heading is still read as Challenges', () => {
+  const result = parse(summaryReadme(FULL_SUMMARY.replace('## Challenges', '## Technical challenges')));
+  assert.equal(result.sections.challenges.heading, 'Challenges');
+  assert.equal(result.sections.challenges.markdown, '- One challenge.\n- Another one.');
+  assert.deepEqual(result.warnings, []);
+});
+
 test('missing required summary sections are reported; optional ones are fine', () => {
   const result = parse(summaryReadme('## The problem\nOnly this.'));
   assert.deepEqual(Object.keys(result.sections), ['problem']);
   assert.deepEqual(result.warnings, [
     '[test] README.md: missing required section "## Solution"',
-    '[test] README.md: missing required section "## Technical challenges"',
+    '[test] README.md: missing required section "## Challenges"',
     '[test] README.md: missing required section "## What I learned"',
     '[test] README.md: missing required section "## Stack"',
   ]);
@@ -116,7 +123,7 @@ test('fixture project: the summary is used and only TODO warnings remain', () =>
   assert.equal(result.title, 'Software Engineering course app');
   assert.equal(result.pitch, 'TODO: one-sentence pitch, what it does and for whom.');
   assert.equal(result.textSource, 'summary');
-  assert.deepEqual(Object.keys(result.sections), ['problem', 'solution', 'technicalChallenges', 'whatILearned', 'stack']);
+  assert.deepEqual(Object.keys(result.sections), ['problem', 'solution', 'challenges', 'whatILearned', 'stack']);
   assert.equal(result.sections.problem.markdown, 'TODO: one or two sentences.');
   assert.deepEqual(result.sections.stack.items, ['TODO']);
   assert.doesNotMatch(JSON.stringify(result.sections), /Architecture|Running locally/);
@@ -134,7 +141,7 @@ test('fallback: no summary, the markers are used and the README is reported', ()
     NO_SUMMARY('missing'),
     '[missing] README.md: section "## Solution" is empty',
     '[missing] README.md: missing required section "## Solution"',
-    '[missing] README.md: missing required section "## Technical challenges"',
+    '[missing] README.md: missing required section "## Challenges"',
     '[missing] README.md: missing required section "## What I learned"',
   ]);
 });
@@ -142,7 +149,7 @@ test('fallback: no summary, the markers are used and the README is reported', ()
 test('fallback: unknown headings are ignored, known ones match case-insensitively', () => {
   const result = parse(fixture('readme/unknown-headings.md'), 'unknown');
 
-  assert.deepEqual(Object.keys(result.sections), ['problem', 'solution', 'technicalChallenges', 'whatILearned', 'stack']);
+  assert.deepEqual(Object.keys(result.sections), ['problem', 'solution', 'challenges', 'whatILearned', 'stack']);
   assert.equal(result.sections.problem.markdown, 'Problem text.');
   assert.equal(result.sections.whatILearned.heading, 'What I learned');
   assert.deepEqual(result.sections.stack.items, ['Node.js', 'Express', 'SQLite']);
@@ -185,10 +192,10 @@ test('fallback edge cases: setext title, GitHub alert before the pitch, markers 
   assert.deepEqual(Object.keys(result.sections), ['problem', 'inputOutput', 'whatILearned', 'stack']);
   assert.deepEqual(result.warnings, [
     NO_SUMMARY('edge'),
-    '[edge] README.md: section "## Technical challenges" is empty',
+    '[edge] README.md: section "## Challenges" is empty',
     '[edge] README.md: section "## Solution" is empty',
     '[edge] README.md: missing required section "## Solution"',
-    '[edge] README.md: missing required section "## Technical challenges"',
+    '[edge] README.md: missing required section "## Challenges"',
   ]);
 });
 
@@ -226,7 +233,7 @@ test('extra markers: uses the first start and the first end after it', () => {
 });
 
 test('marker warnings are not shown when there is a summary', () => {
-  const result = parse('# T\n\nPitch.\n\n<!-- portfolio:summary\n## Problem\nP.\n## Solution\nS.\n## Technical challenges\nC.\n## What I learned\nL.\n## Stack\nX\n-->\n');
+  const result = parse('# T\n\nPitch.\n\n<!-- portfolio:summary\n## Problem\nP.\n## Solution\nS.\n## Challenges\nC.\n## What I learned\nL.\n## Stack\nX\n-->\n');
   assert.equal(result.textSource, 'summary');
   assert.deepEqual(result.warnings, []);
 });
@@ -308,7 +315,7 @@ test('a Stack section without items is reported', () => {
 
 test('SECTIONS lists the sections in display order', () => {
   assert.deepEqual(SECTIONS.map((section) => section.heading), [
-    'Problem', 'Solution', 'Input → Output', 'Technical challenges', 'What I learned', 'Stack', 'Recognition',
+    'Problem', 'Solution', 'Input → Output', 'Challenges', 'What I learned', 'Stack', 'Recognition',
   ]);
   assert.deepEqual(SECTIONS.filter((section) => !section.required).map((section) => section.key), ['inputOutput', 'recognition']);
 });

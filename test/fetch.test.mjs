@@ -268,6 +268,22 @@ test('without a screenshots list, the images in docs/screenshots/ are used in al
   });
 });
 
+test('files are read from the last commit, so a cached branch cannot serve an old version', async (t) => {
+  const env = setup('projects:\n  - repo: me/alpha\n');
+  t.after(() => rmSync(env.dir, { recursive: true, force: true }));
+  const sha = 'a'.repeat(40);
+  const stale = repoFiles('me/alpha', 'alpha', { cover: 'cover-old' });
+  const current = Object.fromEntries(Object.entries(repoFiles('me/alpha', 'alpha', { cover: 'cover-new' })).map(([url, content]) => [url.replace('/HEAD/', `/${sha}/`), content]));
+  const { fetch, calls } = fakeFetch({ ...stale, ...current, [`${API}/me/alpha/commits/HEAD`]: `${sha}\n` });
+
+  const result = await refreshSnapshot({ ...env, fetch });
+
+  assert.deepEqual(result.updated, ['me/alpha']);
+  assert.equal(tree(join(env.snapshotDir, 'assets'))['alpha/docs/cover.png'], 'cover-new');
+  assert.equal(calls.filter((call) => call.url.startsWith(API)).length, 1);
+  assert.ok(!calls.some((call) => call.url.includes('/HEAD/')));
+});
+
 test('without a screenshots list or a docs/screenshots/ folder, only the cover is stored', async (t) => {
   const env = setup('projects:\n  - repo: me/alpha\n');
   t.after(() => rmSync(env.dir, { recursive: true, force: true }));
