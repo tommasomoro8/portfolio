@@ -250,6 +250,8 @@ Use `<details>`/`<summary>` so expanding works without JavaScript. `main.js` onl
 category filters (hide the filter UI when JS is off), recomputes visible year labels and line
 colours, runs the timeline scroll animation, adds the bar that closes an open project, and opens the cover and the screenshots of a project
 in a full-screen carousel (arrows, arrow keys, swipe, Esc; without JS they are links to the image).
+It also preloads the project images once the page has loaded, one at a time in page order, so an
+opened project shows them at once (not with `Save-Data`; without JS they load when a project opens).
 
 ---
 

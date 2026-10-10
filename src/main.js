@@ -200,3 +200,22 @@
     go(step);
   });
 })();
+
+// Preloading: once the page has loaded, the cover and the screenshots of every project are loaded
+// one at a time, in page order, so that a project opens with its images ready. A visitor who asked
+// to save data keeps the lazy loading: the images of a project load when it is opened.
+(() => {
+  if (navigator.connection?.saveData) return;
+  const images = [...document.querySelectorAll('.detail img[loading="lazy"]')];
+
+  function next() {
+    const image = images.shift();
+    if (!image) return;
+    image.loading = 'eager';
+    if (image.complete) return next();
+    for (const type of ['load', 'error']) image.addEventListener(type, next, { once: true });
+  }
+
+  if (document.readyState === 'complete') next();
+  else addEventListener('load', next, { once: true });
+})();
