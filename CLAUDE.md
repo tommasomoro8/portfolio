@@ -301,6 +301,8 @@ gradients other than the blend on the line.
   `mailto:` links do not.
 - Print: the page prints as a CV. The header links other than the email, the category filter,
   "Open project" and the contact CTA are hidden; nothing is added.
+- On iPhone the zone under the status bar always has the page colour, so the page is never seen
+  through it (Safari fills it from an unpainted box fixed to the top of the window).
 - No cookies, no analytics, no third-party requests at all.
 - `<title>`, meta description, Open Graph tags + an OG image, emoji or simple favicon.
 - Lighthouse ≥ 95 in every category.

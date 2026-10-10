@@ -37,6 +37,7 @@ ${url ? `<meta property="og:url" content="${e(url)}">
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
+<div class="top-fill" aria-hidden="true"></div>
 <div class="wrap">
   <header class="site-header">
     <h1>${e(profile.name)}</h1>

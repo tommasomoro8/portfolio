@@ -88,6 +88,20 @@ a { color: inherit; }
 }
 .skip-link:focus { top: 16px; }
 
+/* Safari on iPhone draws the page under the status bar too, and fills that zone with the colour of
+   what is fixed to the top of the window, if it is about as wide as the window and more than 10px
+   tall. This box is there only to be found: it has the page colour, but its padding leaves nothing
+   to paint, so the status bar always has the page colour behind it instead of the page. */
+.top-fill {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 3;
+  height: 12px;
+  padding-top: 12px;
+  background: var(--bg) content-box;
+  pointer-events: none;
+}
+
 /* Header */
 
 .site-header { padding: 64px 0 28px; }
@@ -281,11 +295,10 @@ h2 {
   z-index: -1;
   background: var(--bg);
 }
-/* Safari on iPhone draws the page under the status bar too, above the top of the window where the
-   bar sticks, and fills that zone with the colour of what sticks there only if it is about as wide
-   as the window; otherwise the open project shows through. So the box of the bar reaches both
-   sides of the window (--bar-left, --bar-right: from the card to the sides, up to a 960px window),
-   while only the part over the card is painted and takes clicks. */
+/* Like .top-fill, the bar fills the zone under the status bar in Safari on iPhone, where the open
+   project would show through above it: for that its box reaches both sides of the window
+   (--bar-left, --bar-right: from the card to the sides, up to a 960px window), while only the part
+   over the card is painted and takes clicks. */
 .row { --bar-left: 120px; --bar-right: 20px; }
 .card-bar {
   position: sticky;
