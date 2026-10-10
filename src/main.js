@@ -34,6 +34,24 @@
 
   update();
 
+  // A compact copy of each project's head, which stays at the top of the window while the open
+  // project scrolls by (see the CSS), so it can be closed at any point: the page then goes back to
+  // where the project starts. It is an extra for the pointer; the head itself still opens and closes.
+  for (const row of rows) {
+    const card = row.querySelector('.card');
+    const bar = document.createElement('button');
+    bar.type = 'button';
+    bar.className = 'card-bar';
+    bar.tabIndex = -1;
+    bar.setAttribute('aria-hidden', 'true');
+    bar.innerHTML = `${card.querySelector('.meta').outerHTML}<span class="bar-close">Close</span><b>${card.querySelector('h2').innerHTML}</b>`;
+    bar.addEventListener('click', () => {
+      card.open = false;
+      row.scrollIntoView();
+    });
+    card.querySelector('.card-head').after(bar);
+  }
+
   // Scroll animation: the line is drawn down to a point just below the middle of the window, easing
   // towards it, and each node lights up when the line reaches it. Without it the line is fully drawn.
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;

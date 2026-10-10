@@ -229,6 +229,12 @@ Category label (in the category colour) + status, title, pitch, badges (award, p
 "Open project".
 
 ### Project detail (expanded)
+With JavaScript, a compact bar (category and status, title, "Close", without the pitch and the
+badges) stays at the top of the window while an open project scrolls by, so it can be closed at
+any point; closing it there brings the page back to the start of the project. The bar comes out
+from under the card and the gap below it, once the card's own "Close" has left the window, so the
+two are never seen together (CSS only, nothing listens to the scroll).
+
 1. Header: cover image, facts (period, role, status, course), "Live demo" if `demo` is set,
    `note` if set.
 2. The text from the summary, in the fixed order (Input → Output as two code blocks with an arrow,
@@ -242,7 +248,7 @@ Category label (in the category colour) + status, title, pitch, badges (award, p
 **Progressive enhancement:** all project content is rendered into the HTML at build time.
 Use `<details>`/`<summary>` so expanding works without JavaScript. `main.js` only adds the
 category filters (hide the filter UI when JS is off), recomputes visible year labels and line
-colours, runs the timeline scroll animation, and opens the cover and the screenshots of a project
+colours, runs the timeline scroll animation, adds the bar that closes an open project, and opens the cover and the screenshots of a project
 in a full-screen carousel (arrows, arrow keys, swipe, Esc; without JS they are links to the image).
 
 ---

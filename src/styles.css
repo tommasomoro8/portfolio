@@ -268,10 +268,65 @@ h2 {
 .toggle .when-open, .card[open] .toggle .when-closed { display: none; }
 .card[open] .toggle .when-open { display: inline; }
 
+/* A compact copy of the head (category, status, title, "Close"), added by main.js, which stays at
+   the top of the window while the open project scrolls by. It lies behind the head, which covers
+   it together with the gap down to the detail (::before, 30px: the margin of .detail). That gap is
+   what lets the head's own "Close" leave the window before the one of the bar comes out, so the
+   two are never seen together. */
+.card[open] > .card-head { position: relative; z-index: 2; }
+.card[open] > .card-head::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 -30px;
+  z-index: -1;
+  background: var(--bg);
+}
+.card-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-content: center;
+  column-gap: 16px;
+  width: 100%;
+  height: 54px;
+  margin: -54px 0 0;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--bg);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.card-bar > .meta, .card-bar > b {
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.card-bar > b {
+  grid-column: 1;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+}
+.bar-close {
+  grid-area: 1 / 2 / 3;
+  align-self: center;
+  color: var(--c-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
 /* Project detail */
 
 .detail {
-  margin-top: 18px;
+  margin-top: 30px;
   padding: 22px 24px;
   border: 1px solid var(--line);
   border-left: 3px solid var(--c);
@@ -610,7 +665,7 @@ section.block h2 { font-size: 32px; letter-spacing: -0.025em; }
    line and the filled buttons are printed too. */
 @media print {
   body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .skip-link, .contacts a[target="_blank"], .js .lanes, .toggle, .cta { display: none; }
+  .skip-link, .contacts a[target="_blank"], .js .lanes, .toggle, .card-bar, .cta { display: none; }
   .site-header { padding-top: 0; }
   h2, h3 { break-after: avoid; }
   .card-head, .rlist li { break-inside: avoid; }
