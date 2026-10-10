@@ -5,7 +5,7 @@ import { CATEGORIES, CATEGORY_LABELS, formatDate, kindLabel, renderPressTitle, r
 const EXTERNAL = '<span class="ext" aria-hidden="true">↗</span>';
 
 /** The whole single page. */
-export function renderPage({ profile, projects, press }) {
+export function renderPage({ profile, projects, press, assets }) {
   const hasPress = press.length > 0;
   const intros = profile.intros ?? {};
   const url = profile.url ?? '';
@@ -32,8 +32,8 @@ ${url ? `<meta property="og:url" content="${e(url)}">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/schibsted-grotesk.woff2" as="font" type="font/woff2" crossorigin>
 <script>document.documentElement.classList.add('js')</script>
-<link rel="stylesheet" href="styles.css">
-<script src="main.js" defer></script>
+<link rel="stylesheet" href="${assets['styles.css']}">
+<script src="${assets['main.js']}" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>

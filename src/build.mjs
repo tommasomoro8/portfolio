@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { existsSync, readdirSync } from 'node:fs';
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
@@ -36,7 +37,14 @@ export async function build({
   }
   projects.sort((a, b) => b.year - a.year || a.order - b.order);
 
-  const html = renderPage({ profile, projects, press: collectPress(projects) });
+  // The links to the stylesheet and the script change with their content, so a browser never
+  // shows a new page with the old files it has in its cache.
+  const assets = {};
+  for (const name of ['styles.css', 'main.js']) {
+    const hash = createHash('sha256').update(await readFile(join(ROOT, 'src', name))).digest('hex');
+    assets[name] = `${name}?v=${hash.slice(0, 8)}`;
+  }
+  const html = renderPage({ profile, projects, press: collectPress(projects), assets });
 
   await rm(outDir, { recursive: true, force: true });
   await mkdir(outDir, { recursive: true });

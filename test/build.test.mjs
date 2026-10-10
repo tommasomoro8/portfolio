@@ -192,6 +192,9 @@ test('builds the page from a snapshot', async (t) => {
   }
   assert.ok(existsSync(join(outDir, 'styles.css')));
   assert.ok(existsSync(join(outDir, 'main.js')));
+  // Their links carry a version, so a new deploy is never shown with the files of the old one.
+  assert.match(html, /<link rel="stylesheet" href="styles\.css\?v=[0-9a-f]{8}">/);
+  assert.match(html, /<script src="main\.js\?v=[0-9a-f]{8}" defer><\/script>/);
   assert.ok(existsSync(join(outDir, 'fonts/schibsted-grotesk.woff2')));
 });
 
