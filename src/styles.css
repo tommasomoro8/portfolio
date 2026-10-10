@@ -302,6 +302,19 @@ h2 {
   text-align: left;
   cursor: pointer;
 }
+/* On an iPhone the bar sticks below the status bar, and the page would show through above it: a
+   strip as tall as the status bar covers that. When the bar is not stuck, the strip lies behind
+   the head as well (every head is taller than the bar and the strip together). */
+.card-bar::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--bg);
+  pointer-events: none;
+}
 .card-bar > .meta, .card-bar > b {
   margin: 0;
   overflow: hidden;
