@@ -4,7 +4,7 @@ export const CATEGORY_LABELS = {
   university: 'University',
   school: 'School',
   personal: 'Personal',
-  client: 'Client work',
+  client: 'Freelance',
 };
 export const CATEGORIES = Object.keys(CATEGORY_LABELS);
 

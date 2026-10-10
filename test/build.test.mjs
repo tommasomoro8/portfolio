@@ -125,7 +125,7 @@ test('builds the page from a snapshot', async (t) => {
   assert.match(html, /<div class="lanes" role="group" aria-label="Show category">/);
   assert.match(html, /data-category="all" aria-pressed="true">All \(2\)<\/button>/);
   assert.match(html, /data-category="school" aria-pressed="false"><span class="sw"><\/span>School \(1\)<\/button>/);
-  assert.match(html, /data-category="client" aria-pressed="false" disabled><span class="sw"><\/span>Client work \(0\)<\/button>/);
+  assert.match(html, /data-category="client" aria-pressed="false" disabled><span class="sw"><\/span>Freelance \(0\)<\/button>/);
   assert.doesNotMatch(html, /lanes-hint|site-footer/);
 
   // One timeline line: each row names the category of the next one, which its line blends into;

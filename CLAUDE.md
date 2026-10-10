@@ -302,7 +302,7 @@ gradients other than the blend on the line.
 ## 7. Copy
 
 ### Category labels
-University · School · Personal · Client work
+University · School · Personal · Freelance
 
 ### Header bio (draft, I'll refine)
 "Computer Science student at Ca' Foscari University of Venice. I started by rebuilding places
