@@ -302,18 +302,22 @@ h2 {
   text-align: left;
   cursor: pointer;
 }
-/* On an iPhone the bar sticks below the status bar, and the page would show through above it: a
-   strip as tall as the status bar covers that. When the bar is not stuck, the strip lies behind
-   the head as well (every head is taller than the bar and the strip together). */
-.card-bar::before {
-  content: "";
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  right: 0;
-  height: env(safe-area-inset-top, 0px);
-  background: var(--bg);
-  pointer-events: none;
+/* Safari on iPhone draws the page under the status bar too, above the top of the window where the
+   bar sticks, so the open project would show through there. A strip covers the card above the bar,
+   cut at the top of the card so it never reaches the projects before it; when the bar is not stuck,
+   the strip lies behind the head. Without overflow: clip it would cover them, so it is left out. */
+@supports (overflow: clip) {
+  .card[open] { overflow-y: clip; }
+  .card-bar::before {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    height: 100vh;
+    background: var(--bg);
+    pointer-events: none;
+  }
 }
 .card-bar > .meta, .card-bar > b {
   margin: 0;
