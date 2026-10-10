@@ -39,12 +39,10 @@
   // where the project starts. It is an extra for the pointer; the head itself still opens and closes.
   for (const row of rows) {
     const card = row.querySelector('.card');
-    const bar = document.createElement('button');
-    bar.type = 'button';
+    const bar = document.createElement('div');
     bar.className = 'card-bar';
-    bar.tabIndex = -1;
     bar.setAttribute('aria-hidden', 'true');
-    bar.innerHTML = `${card.querySelector('.meta').outerHTML}<span class="bar-close">Close</span><b>${card.querySelector('h2').innerHTML}</b>`;
+    bar.innerHTML = `<button type="button" tabindex="-1">${card.querySelector('.meta').outerHTML}<span class="bar-close">Close</span><b>${card.querySelector('h2').innerHTML}</b></button>`;
     bar.addEventListener('click', () => {
       card.open = false;
       row.scrollIntoView();
