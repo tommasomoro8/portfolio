@@ -362,7 +362,7 @@ experience:
     org: Targa Telematics, Treviso
     url: https://targatelematics.com/
     period: Jan 2024 · two weeks
-    text: "Two highly formative weeks that taught me the importance of critical thinking and improved how I analyze and solve complex problems."
+    text: "A highly formative experience that taught me the importance of critical thinking and improved how I analyze and solve complex problems."
 
 other_experience:
   - title: Sales associate
