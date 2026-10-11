@@ -11,19 +11,18 @@ If something here is unclear or missing, ask me instead of guessing.
 
 ## 1. Hard rules
 
-### Commits and authorship
-- I am the only author. Commits must contain **no** AI attribution of any kind:
-  no `Co-Authored-By:` trailer, no `Generated with ...` line, no `Claude-Session:` trailer,
-  no mention of Claude, AI or an assistant in commit messages, PR descriptions, code comments,
-  documentation or the site itself.
-- First task (Phase 0) enforces this mechanically, see section 9.
+### Commits
+- Commit messages carry no `Co-Authored-By:` trailer and no `Generated with ...` or
+  `Claude-Session:` line, because GitHub would list Claude among the repo's contributors. That is
+  the only reason: it is not about hiding that I work with Claude Code, and this file and
+  `.claude/` are part of the repo.
+- `.claude/settings.json` turns those lines off and the `commit-msg` hook removes any that still
+  gets through (Phase 0, section 9). In a fresh clone, run `npm run setup` to enable the hook.
 - Commit messages: Conventional Commits, English, imperative, small focused commits
   (`feat(build): parse README portfolio sections`).
 - Work directly on `main`: commit and push to `main`, with no feature branches or pull requests.
   Every push deploys the site; the tests and the build run first, so run `npm test` and
   `npm run build` locally before pushing.
-- Commits are authored as `Tommaso Moro <moroxtommaso@gmail.com>` and are not signed. In a fresh
-  clone, set `user.name`, `user.email` and `commit.gpgsign false` for the repo and run `npm run setup`.
 
 ### Content
 - Never invent facts about me or my projects. Missing information becomes a visible
@@ -414,7 +413,7 @@ to `tommasomoro8.github.io`).
 Work in phases. At the end of each phase: run tests, commit, then stop and give me a short
 summary plus anything you need from me. Don't start the next phase until I say so.
 
-**Phase 0 — Setup and attribution guard**
+**Phase 0 — Setup and commit trailers**
 - `git init` if needed, `.gitignore` (node_modules, dist, .env*), `package.json`, `.editorconfig`.
 - Create `.claude/settings.json` containing `{ "attribution": { "commit": "", "pr": "" } }`.
 - Add a versioned `commit-msg` hook in `.githooks/commit-msg` that removes any line matching
