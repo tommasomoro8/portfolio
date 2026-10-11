@@ -31,6 +31,7 @@ and trims trailing blank lines. Run it once after cloning.
 | `npm run fetch` | Download every project in `portfolio.config.yml` into `data/snapshot/` (online) |
 | `npm run build` | Build the site into `dist/` from `data/snapshot/` and `content/` (offline)      |
 | `npm run dev`   | Build, serve `dist/` at <http://localhost:8080> and rebuild on changes          |
+| `npm run og`    | Take the share image, a screenshot of the built page, as `dist/og.png`          |
 | `npm test`      | Run the tests                                                                   |
 
 ## How it works
@@ -48,6 +49,9 @@ portfolio.config.yml ──► fetch ──► data/snapshot/ (committed) ──
 - `npm run build` never goes online, so the site can always be rebuilt from the last good
   snapshot. The page makes no third-party requests: fonts are self-hosted and images are served
   from the site itself.
+- `npm run og` takes the image shown when the link is shared: a screenshot of the top of the
+  built page, so it follows the projects. It runs at every deploy and needs Chrome (`CHROME_BIN`
+  names another browser). When it can't run, the last image saved in `public/og.png` is used.
 - Warnings name the project and the problem (a README without the summary block, a missing
   section, a `TODO` left in the content, an image that wasn't found), so both commands are worth
   a glance after editing a project.
@@ -59,7 +63,7 @@ portfolio.config.yml ──► fetch ──► data/snapshot/ (committed) ──
 | `content/local/<slug>` | Projects without a public repository (same files as a repo)    |
 | `data/snapshot/`       | Last good copy of every project and its images                 |
 | `src/`                 | Fetch and build scripts, templates, styles and the page script |
-| `public/`              | Fonts, favicon and share image, copied as they are             |
+| `public/`              | Fonts, favicon and the spare share image, copied as they are   |
 
 ## Adding a project
 
@@ -143,9 +147,9 @@ portfolio.config.yml ──► fetch ──► data/snapshot/ (committed) ──
 
 `.github/workflows/build-deploy.yml` runs on every push to `main`, every day at 05:17 UTC and on
 demand (Actions → Build and deploy → Run workflow). It fetches the projects, commits
-`data/snapshot/` if it changed (as `github-actions[bot]`), runs the tests, builds the site and
-deploys `dist/` to GitHub Pages. If fetching fails, the last committed snapshot is deployed. No
-secrets are needed.
+`data/snapshot/` if it changed (as `github-actions[bot]`), runs the tests, builds the site, takes
+the share image and deploys `dist/` to GitHub Pages. If fetching fails, the last committed
+snapshot is deployed. No secrets are needed.
 
 One-time setup on GitHub:
 

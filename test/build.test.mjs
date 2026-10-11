@@ -263,6 +263,11 @@ test('an empty snapshot still builds a complete page', async (t) => {
   for (const id of ['education', 'experience', 'other-experience', 'contact']) assert.match(html, new RegExp(`id="${id}"`));
   assert.match(html, /<h2 id="cta-title">Curious about my work\?<br>Let&#39;s get in touch!<\/h2>/);
   assert.match(html, /href="mailto:moroxtommaso@gmail\.com\?subject=Hi%20Tommaso">Email me/);
+  // The share preview: the title, and the image that stays in place when no screenshot is taken.
+  assert.match(html, /<title>Tommaso Moro&#39;s portfolio<\/title>/);
+  assert.match(html, /<meta property="og:title" content="Tommaso Moro&#39;s portfolio">/);
+  assert.ok(html.includes(`<meta property="og:image" content="${new URL('og.png', profile.url).href}">`));
+  assert.ok(existsSync(join(outDir, 'og.png')));
   // Experience holds the IT work; the jobs outside programming follow under "Other experience".
   const [it, other] = html.split('id="other-experience"');
   assert.match(it, /<h2 id="experience-title">Experience<\/h2>[\s\S]*IT internship/);

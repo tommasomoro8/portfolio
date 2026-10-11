@@ -49,6 +49,10 @@ jobs:
 
       - run: npm run build
 
+      - name: Take the share image
+        run: npm run og
+        continue-on-error: true # the image in public/ is deployed instead
+
       - uses: actions/configure-pages@v6
 
       - uses: actions/upload-pages-artifact@v5

@@ -35,7 +35,8 @@ If something here is unclear or missing, ask me instead of guessing.
 - Allowed without asking: `marked` (Markdown → HTML), `js-yaml`.
 - Anything else: ask first and explain why. No frontend framework, no CSS framework,
   no bundler. Plain HTML, CSS and a small vanilla JS file.
-- Lighthouse may be run with `npx` for audits; it is not a dependency.
+- Lighthouse may be run with `npx` for audits; it is not a dependency. The share image is taken
+  with the Chrome already on the machine, which is not a dependency either.
 
 ### Keep it simple
 - It's a portfolio. Prefer the simplest thing that works; don't over-engineer.
@@ -62,6 +63,10 @@ Two separate commands:
   from a five-minute cache; if the commit cannot be resolved, they are read from `HEAD`. Only when a
   project has no `screenshots` list is `docs/screenshots/` listed through the GitHub contents API.
 - `npm run build` — offline. Reads **only** `data/snapshot/` and `content/`, writes `dist/`.
+
+A third, optional one runs after the build: `npm run og` takes the share image (section 6) with
+headless Chrome and saves it as `dist/og.png`. When it cannot run, `dist/` keeps the copy of
+`public/og.png`, the last image saved in the repo.
 
 ### Resilience rules (important)
 - If fetching one repo fails (network, 404, rate limit, GitHub down), keep that project's
@@ -192,17 +197,18 @@ portfolio/
 ├── src/
 │   ├── fetch.mjs
 │   ├── build.mjs
+│   ├── og.mjs                 # screenshot of the built page → dist/og.png
 │   ├── lib/                   # readme parser, yml validation, rendering helpers
 │   ├── templates/             # HTML template functions (template literals are fine)
 │   ├── styles.css
 │   └── main.js                # filters + small enhancements only
-├── public/                    # favicon, self-hosted fonts, og image
+├── public/                    # favicon, self-hosted fonts, spare og image
 ├── test/                      # node:test
 ├── dist/                      # gitignored
 └── .github/workflows/build-deploy.yml
 ```
 
-Node 20+, ES modules, `node:test` for tests. Scripts: `fetch`, `build`, `dev` (build + serve
+Node 20+, ES modules, `node:test` for tests. Scripts: `fetch`, `build`, `og`, `dev` (build + serve
 `dist/` locally with watch), `test`.
 
 ---
@@ -304,7 +310,10 @@ gradients other than the blend on the line.
 - On iPhone the zone under the status bar always has the page colour, so the page is never seen
   through it (Safari fills it from an unpainted box fixed to the top of the window).
 - No cookies, no analytics, no third-party requests at all.
-- `<title>`, meta description, Open Graph tags + an OG image, emoji or simple favicon.
+- `<title>` and share title "Tommaso Moro's portfolio", meta description, Open Graph tags,
+  emoji or simple favicon.
+- The share image (`og.png`, 1200×630) is a screenshot of the top of the page as it opens on a
+  desktop, taken again at every deploy so it follows the projects.
 - Lighthouse ≥ 95 in every category.
 
 ---
@@ -380,15 +389,18 @@ other_experience:
 
 ## 8. Deployment (GitHub Actions → GitHub Pages)
 
-The site is served at `https://tommasomoro8.github.io/` (this repo will be renamed to
-`tommasomoro8.github.io`). All links in the page are relative, so it also works under a sub-path.
+The site is served at `https://tommasomoro8.github.io/portfolio/`, the `url` in
+`content/profile.yml`, which the canonical link and the share tags are built from.
+`https://tommasomoro8.github.io/` is a page in the repo `tommasomoro8.github.io` that redirects
+to it. All links in the page are relative, so it would also work at the root (this repo renamed
+to `tommasomoro8.github.io`).
 
 `.github/workflows/build-deploy.yml`:
 - Triggers: push to `main`, `workflow_dispatch`, daily `schedule`.
 - Steps: checkout → setup Node 24 with npm cache → `npm ci` → `npm run fetch`
   (`continue-on-error: true`) → if `data/snapshot/` changed, commit it as
   `github-actions[bot]` with message `chore(data): refresh project snapshot` and push →
-  `npm test` → `npm run build` → upload `dist/` and deploy it with the official GitHub Pages
+  `npm test` → `npm run build` → `npm run og` (`continue-on-error: true`) → upload `dist/` and deploy it with the official GitHub Pages
   actions.
 - No secrets: the workflow's `GITHUB_TOKEN` is used for fetching.
 - Least-privilege `permissions:` per job (`contents: write` only because of the snapshot commit;

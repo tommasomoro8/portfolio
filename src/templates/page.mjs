@@ -9,7 +9,7 @@ export function renderPage({ profile, projects, press, assets }) {
   const hasPress = press.length > 0;
   const intros = profile.intros ?? {};
   const url = profile.url ?? '';
-  const title = `${profile.name} — Portfolio`;
+  const title = `${profile.name}'s portfolio`;
 
   return `<!doctype html>
 <html lang="en">
@@ -27,7 +27,7 @@ ${url ? `<meta property="og:url" content="${e(url)}">
 <meta property="og:image" content="${e(new URL('og.png', url).href)}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="${e(profile.name)}: projects, press, education and experience">
+<meta property="og:image:alt" content="The top of ${e(title)}">
 <meta name="twitter:card" content="summary_large_image">` : ''}
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/schibsted-grotesk.woff2" as="font" type="font/woff2" crossorigin>
