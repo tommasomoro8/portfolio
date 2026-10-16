@@ -39,10 +39,10 @@ education:
     text: "Native Italian, English B2."
 
 experience:
-  - title: IT internship
+  - title: Software Engineering Intern
     org: Targa Telematics, Treviso
     url: https://targatelematics.com/
-    period: Jan 2024 · two weeks
+    period: Jan 2024
     text: "A highly formative experience that taught me the importance of critical thinking and improved how I analyze and solve complex problems."
 
 other_experience:

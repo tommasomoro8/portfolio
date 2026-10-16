@@ -270,11 +270,11 @@ test('an empty snapshot still builds a complete page', async (t) => {
   assert.ok(existsSync(join(outDir, 'og.png')));
   // Experience holds the IT work; the jobs outside programming follow under "Other experience".
   const [it, other] = html.split('id="other-experience"');
-  assert.match(it, /<h2 id="experience-title">Experience<\/h2>[\s\S]*IT internship/);
+  assert.match(it, /<h2 id="experience-title">Experience<\/h2>[\s\S]*Software Engineering Intern/);
   assert.doesNotMatch(it, /MediaWorld|The Space Cinema/);
   assert.match(other, /<h2 id="other-experience-title">Other experience<\/h2>\s*<p class="lead">Jobs outside programming/);
   assert.match(other, /MediaWorld[\s\S]*The Space Cinema/);
-  assert.doesNotMatch(other, /IT internship/);
+  assert.doesNotMatch(other, /Software Engineering Intern/);
   // A school or company with a `url` is a link to its site; the others stay plain text.
   assert.match(html, /<span class="where"><a href="https:\/\/www\.unive\.it\/" target="_blank" rel="noopener">Ca&#39; Foscari University of Venice<span class="ext" aria-hidden="true">↗<\/span><\/a><\/span>/);
   assert.match(html, /<span class="where">MediaWorld, Treviso<\/span>/);
