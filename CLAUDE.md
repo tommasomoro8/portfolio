@@ -1,7 +1,7 @@
 # Portfolio — project brief
 
 This repository builds and deploys my personal portfolio site: a minimal, static, English-language
-timeline of my projects, followed by press & recognition, education, experience, other experience,
+timeline of my projects, followed by education, experience, other experience, press & recognition,
 and a contact section.
 
 Read this whole file before doing anything. It is the source of truth for scope, rules and design.
@@ -221,12 +221,12 @@ Single page, in this order:
 2. **Category filter** — "All" plus one pill per category, with project counts; one category at a
    time (clicking it again goes back to All). Clicking a pill closes every open project.
 3. **Projects timeline** — newest first (by `year`, then config order).
-4. **Press & recognition** — every `press` item of every project, newest first; undated items
+4. **Education**
+5. **Experience** — IT work only (for now the internship).
+6. **Other experience** — jobs outside programming.
+7. **Press & recognition** — every `press` item of every project, newest first; undated items
    sorted by their project's year and shown as "<year> · date unknown". Each item links to the
    source and names the project.
-5. **Education**
-6. **Experience** — IT work only (for now the internship).
-7. **Other experience** — jobs outside programming.
 8. **Contact CTA** — the page ends here, with no footer.
 
 ### Project card (collapsed)

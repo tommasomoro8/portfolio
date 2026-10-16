@@ -52,10 +52,10 @@ ${url ? `<meta property="og:url" content="${e(url)}">
 
   <main id="main">
 ${renderProjects(projects)}
-${hasPress ? renderPress(press, intros.press) : ''}
 ${renderEntries('education', 'Education', profile.education ?? [], projects, intros.education)}
 ${renderEntries('experience', 'Experience', profile.experience ?? [], projects, intros.experience)}
 ${profile.other_experience?.length ? renderEntries('other-experience', 'Other experience', profile.other_experience, projects, intros.other_experience) : ''}
+${hasPress ? renderPress(press, intros.press) : ''}
 ${renderContact(profile)}
   </main>
 </div>

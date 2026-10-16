@@ -1,8 +1,8 @@
 # Portfolio
 
 Source of my personal portfolio site, published at <https://tommasomoro8.github.io/>: a static,
-single-page timeline of my projects, followed by press & recognition, education, experience and
-a contact section.
+single-page timeline of my projects, followed by education, experience, other experience, press &
+recognition and a contact section.
 
 Each project's content comes from the `README.md` and `portfolio.yml` of its own repository, so
 the site and the repositories never drift apart.
