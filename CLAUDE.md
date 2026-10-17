@@ -13,11 +13,7 @@ If something here is unclear or missing, ask me instead of guessing.
 
 ### Commits
 - Commit messages carry no `Co-Authored-By:` trailer and no `Generated with ...` or
-  `Claude-Session:` line, because GitHub would list Claude among the repo's contributors. That is
-  the only reason: it is not about hiding that I work with Claude Code, and this file and
-  `.claude/` are part of the repo.
-- `.claude/settings.json` turns those lines off and the `commit-msg` hook removes any that still
-  gets through (Phase 0, section 9). In a fresh clone, run `npm run setup` to enable the hook.
+  `Claude-Session:` line, because GitHub would list Claude among the repo's contributors.
 - Commit messages: Conventional Commits, English, imperative, small focused commits
   (`feat(build): parse README portfolio sections`).
 - Work directly on `main`: commit and push to `main`, with no feature branches or pull requests.
