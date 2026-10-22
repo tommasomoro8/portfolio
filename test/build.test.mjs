@@ -270,7 +270,7 @@ test('an empty snapshot still builds a complete page', async (t) => {
   assert.ok(existsSync(join(outDir, 'og.png')));
   // Experience holds the IT work; the jobs outside programming follow under "Other experience".
   const [it, other] = html.split('id="other-experience"');
-  assert.match(it, /<h2 id="experience-title">Experience<\/h2>[\s\S]*Software Engineering Intern/);
+  assert.match(it, /<h2 id="experience-title">Experience<\/h2>[\s\S]*Software Engineering Shadowing/);
   assert.doesNotMatch(it, /MediaWorld|The Space Cinema/);
   assert.match(other, /<h2 id="other-experience-title">Other experience<\/h2>\s*<p class="lead">Jobs outside programming/);
   assert.match(other, /MediaWorld[\s\S]*The Space Cinema/);
