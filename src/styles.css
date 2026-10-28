@@ -558,7 +558,7 @@ html:has(.lightbox[open]) { overflow: hidden; }
 
 section.block { padding: 56px 0 8px; }
 section.block h2 { font-size: 32px; letter-spacing: -0.025em; }
-.block .lead { max-width: 60ch; margin: 0 0 20px; color: var(--muted); }
+.block .lead { margin: 0 0 20px; color: var(--muted); }
 
 .rlist {
   margin: 0;
