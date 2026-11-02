@@ -1,5 +1,7 @@
 # Next Steps
 
+- tra i filtri mettere progetti migliori (tipo crm e vr scuola) e metterlo default
+
 - lingua italiano e inglese
 - modalità recruiter e mamma (modalità seria e modalità mia mamma deve capire quello che faccio)
 
